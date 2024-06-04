@@ -2,7 +2,7 @@ from django.db import models
 
 
 class RestaurantCategory(models.Model):
-    category_name = models.CharField(max_length=100)
+    category_name = models.CharField(max_length=100)  # pan-asian, europe, usa, arabic, turkish, family
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -31,7 +31,7 @@ class Restaurant(models.Model):
 
 
 class RoomType(models.Model):
-    room_type_name = models.CharField(max_length=100)
+    room_type_name = models.CharField(max_length=100)  # luxe, family, primary,
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
