@@ -11,7 +11,6 @@ class RestaurantCategory(models.Model):
         return self.category_name
 
 
-
 class Restaurant(models.Model):
     author = models.ForeignKey(User, models.SET_NULL, null=True)  # need to discuss
     restaurant_name = models.CharField(max_length=255)
@@ -29,14 +28,17 @@ class Restaurant(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        return self.restaurant_name
 
 
 class RoomType(models.Model):
-    room_amount_people = models.IntegerField(default=0)
+    room_type_name = models.CharField(max_length=100)  # luxe, family, primary,
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.room_type_name
 
 
 class RestaurantRoom(models.Model):
@@ -57,6 +59,8 @@ class RestaurantRoom(models.Model):
 
 
 class RestaurantMenu(models.Model):
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+
     name = models.CharField(max_length=255)
     price = models.IntegerField()
     ingredients = models.TextField(max_length=1000)
