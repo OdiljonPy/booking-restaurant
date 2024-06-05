@@ -62,8 +62,9 @@ class RestaurantMenu(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
 
     name = models.CharField(max_length=255)
-    price = models.IntegerField()
-    ingredients = models.TextField(max_length=1000)
+    pictures = models.ImageField(upload_to='images/restaurants/menu_images/')
+    price = models.IntegerField(default=0)
+    ingredients = models.TextField(max_length=2000)
     description = models.TextField()
 
     created_at = models.DateTimeField(auto_now_add=True)

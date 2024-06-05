@@ -4,8 +4,8 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom
-from .serializers import CategorySerializer, RestaurantSerializer, RoomSerializer, RoomTypeSerializer
+from .models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom, RestaurantMenu
+from .serializers import CategorySerializer, RestaurantSerializer, RoomSerializer, RoomTypeSerializer, MenuSerializer
 
 
 # Restaurant Section
@@ -17,11 +17,15 @@ def restaurant_filter_view(request):
     Diqqat: Ma'lum bir paremetrlar qabul qilinadi filterlash uchun, xech qanday parametr qabul qilinmasa toliq royxat
     pagination bilan qaytariladi.
     """
-    pass
+
+    def show_restaurant(self, request):
+        restaurant_info = Restaurant.objects.all()
+        restaurant_serialize = RestaurantSerializer(restaurant_info, many=True).data
+        return Response(data={"List of restaurants": restaurant_serialize}, status=status.HTTP_200_OK)
 
 
 class RestaurantCategoryViewSet(ViewSet):
-    def restaurant_category(self, request):
+    def restaurant_category(self, request) -> list:
         category = RestaurantCategory.objects.all()
         category_serialize = CategorySerializer(category, many=True).data
         return Response(data={"list of categories": category_serialize}, status=status.HTTP_200_OK)
@@ -37,16 +41,10 @@ class RestaurantViewSet(ViewSet):
         restaurant_obj.save()
         return Response(data={'message': 'Restaurant successfully created'}, status=status.HTTP_201_CREATED)
 
-    def show_restaurant(self, request):
-        restaurant_info = Restaurant.objects.all()
-        restaurant_serialize = RestaurantSerializer(restaurant_info, many=True).data
-        return Response(data={"List of restaurants": restaurant_serialize}, status=status.HTTP_200_OK)
-
 
 class ActionRestaurantViewSet(ViewSet):
     # Bu view quydagi 3 funksiyani ishlatish uchun foydalanishga moljalangan edi.
-    #
-    def show_restaurant_detail(self, request, pk):
+    def show_restaurant_detail(self, request, pk) -> dict:
         restaurant_detail = Restaurant.objects.filter(id=pk).first()
         restaurant_serialize = RestaurantSerializer(restaurant_detail).data
         return Response(data={"restaurant_detail": restaurant_serialize}, status=status.HTTP_200_OK)
@@ -71,19 +69,19 @@ class ActionRestaurantViewSet(ViewSet):
 
 # Room section
 
-def RoomTypeViewSet(request):
+class RoomTypeViewSet(ViewSet):
     def add_room_type(self, request):
         room_type = RoomType.objects.create(room_type=request.data['room_type'])
         room_type.save()
         return Response(data={"message": f"{room_type} type is created successfully"}, status=status.HTTP_201_CREATED)
 
-    def show_room_type(request):
+    def show_room_type(request) -> list:
         room_type = RoomType.objects.all()
         room_type_serialize = RoomTypeSerializer(room_type, many=True).data
         return Response(data={"list of room types": room_type_serialize}, status=status.HTTP_200_OK)
 
 
-def RoomTypeActionViewSet(request):
+class RoomTypeActionViewSet(ViewSet):
     def edit_room_type(request, pk):
         room_type = RoomType.objects.filter(id=pk).first()
         room_type['room_type'] = request.data['room_type']
@@ -98,7 +96,7 @@ def RoomTypeActionViewSet(request):
         return Response(data={"message": message}, status=status.HTTP_200_OK)
 
 
-def RestaurantRoomViewSet(ViewSet):
+class RestaurantRoomViewSet(ViewSet):
     """
     Restaurantlarni room lari ni royxat korinishda olish uchun
 
@@ -119,13 +117,13 @@ def RestaurantRoomViewSet(ViewSet):
         room.save()
         return Response(data={"message": f"{room} room is created successfully"}, status=status.HTTP_201_CREATED)
 
-    def show_restaurant_room(self, request, pk):
+    def show_restaurant_room(self, request, pk) -> list:
         room = RestaurantRoom.objects.filter(restaurant_id=pk)
         room_serialize = RoomSerializer(room, many=True).data
         return Response(data={"list of rooms": room_serialize}, status=status.HTTP_200_OK)
 
 
-def RestaurantRoomActionView(request):
+class RestaurantRoomActionViewSet(ViewSet):
     """
     Restaurant uchun yangi room qoshish uchun ishlatiladi.
 
@@ -133,7 +131,12 @@ def RestaurantRoomActionView(request):
     Talab qilinadi: User restaurant egasi, yoki tizim adminstratori bolishi kerak
     """
 
-    def edit_room_room(request, pk):
+    def show_room_detail(self, request, pk):
+        room = RestaurantRoom.objects.filter(restaurant_id=pk).first()
+        room_serialize = RoomSerializer(room, many=True).data
+        return Response(data={"room_details": room_serialize}, status=status.HTTP_200_OK)
+
+    def edit_room(request, pk):
         room = RestaurantRoom.objects.filter(id=pk).first()
         room['room_name'] = request.data['room_name']
         room['pictures'] = request.data['pictures']
@@ -152,16 +155,46 @@ def RestaurantRoomActionView(request):
 
 # Menu section
 
-def restaurant_menu_view(request):
-    pass
+class RestaurantMenuViewSet(ViewSet):
+    def show_restaurant_menu(self, request) -> list:
+        menu = RestaurantMenu.objects.filter(restaurant_id=request.data['restaurant_id'])
+        menu_serialize = MenuSerializer(menu, many=True).data
+        return Response(data={"menu": menu_serialize}, status=status.HTTP_200_OK)
+
+    def add_restaurant_menu(self, request):
+        menu = RestaurantMenu.objects.create(restaurant_id=request.data['restaurant_id'],
+                                             name=request.data['name'],
+                                             pictures=request.data['pictures'],
+                                             price=request.data['price'],
+                                             ingredients=request.data['ingredients'],
+                                             description=request.data['description'],
+                                             )
+        menu.save()
+        message = f"{menu.name} is created successfully"
+        return Response(data={"message": message}, status=status.HTTP_201_CREATED)
 
 
-def restaurant_menu_add_view(request):
-    pass
+class RestaurantMenuActionsView(ViewSet):
+    def show_menu_detail(self, request, pk) -> dict:
+        menu = RestaurantMenu.objects.filter(id=pk).first()
+        menu_serialize = MenuSerializer(menu, many=True).data
+        return Response(data={"menu_details": menu_serialize}, status=status.HTTP_200_OK)
 
+    def edit_menu(request, pk):
+        menu = RestaurantMenu.objects.filter(id=pk).first()
+        menu['name'] = request.data['name']
+        menu['price'] = request.data['price']
+        ...
+        menu.save(update_fields=['name', 'price'])
+        menu_serialize = MenuSerializer(menu).data
+        message = f"{menu.name} is changed"
+        return Response(data={"message": message}, status=status.HTTP_200_OK)
 
-def restaurant_menu_actions_view(request):
-    pass
+    def delete_menu(request, pk):
+        menu = RestaurantMenu.objects.filter(id=pk).first()
+        message = f"{menu.name} is deleted"
+        del menu
+        return Response(data={"message": message}, status=status.HTTP_200_OK)
 
 
 # Comments and Reviews

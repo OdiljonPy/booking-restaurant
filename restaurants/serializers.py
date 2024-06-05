@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer
-from .models import RestaurantCategory, Restaurant, RoomType, RestaurantRoom
+from .models import RestaurantCategory, Restaurant, RoomType, RestaurantRoom, RestaurantMenu
 
 
 class CategorySerializer(ModelSerializer):
@@ -23,4 +23,10 @@ class RoomTypeSerializer(ModelSerializer):
 class RoomSerializer(ModelSerializer):
     class Meta:
         model = RestaurantRoom
+        fields = "__all__"
+
+
+class MenuSerializer(ModelSerializer):
+    class Meta:
+        model = RestaurantMenu
         fields = "__all__"
