@@ -3,5 +3,4 @@ from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
-    email = None
-    profile_picture = models.ImageField(upload_to='profile_pictures/')
+    email = False
