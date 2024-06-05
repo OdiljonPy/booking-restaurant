@@ -18,6 +18,9 @@ class Restaurant(models.Model):
     description = models.TextField()
     service_fee = models.IntegerField()
 
+    booking_count_total = models.IntegerField(default=0)
+    booking_count_day_by_day = models.IntegerField(default=0)
+
     address = models.CharField(max_length=100)
     phone = models.CharField(max_length=12)
     email = models.CharField(max_length=100)
