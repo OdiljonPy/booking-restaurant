@@ -1,4 +1,6 @@
 from django.shortcuts import render
+from rest_framework.generics import ListAPIView, CreateAPIView , RetrieveUpdateDestroyAPIView
+
 
 
 # Restaurant Section
@@ -13,24 +15,16 @@ def restaurant_filter_view(request):
     pass
 
 
-def restaturant_add_view(request):
-    """
-    Yangi restaurant qoshish uchun ishlatiladi.
-
-    Talab qilinadi: Bunig uchun faqat Ma'lum toifadagi royxatdan otgan va shu api
-    ga dostupi bor login qilgan user bolishi shart.
-    """
+class AddRestaurantView(CreateAPIView):
     pass
 
 
-def restaturant_actions_view(request):
-    """
-    Bu yerda restaurant ga tegishli amallarni request type ga qarab delete, get detail, edit, qilish amallarini bajarish
-    uchun ishlatiladi.
 
-    Diqqat: {id} - restaurant id sini parametr sifatida user tarafidan jonatilishi kerak.
-    Talab qilinadi: Edit yoki delete qilish uchun user Super admin yoki, Restaurant egasi, Tzim manageri bolishi kerak
-    """
+class AddRestaurantCategoryView(CreateAPIView):
+    pass
+
+
+class ActionRestaurantView(RetrieveUpdateDestroyAPIView):
     pass
 
 
@@ -83,4 +77,5 @@ def restaurant_comment_view(request):
 
 
 def restaurant_rate_view(request):
-    pass
+
+
