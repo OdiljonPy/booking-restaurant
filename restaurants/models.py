@@ -21,6 +21,7 @@ class Restaurant(models.Model):
     address = models.CharField(max_length=100)
     phone = models.CharField(max_length=12)
     email = models.CharField(max_length=100)
+    location = models.CharField(max_length=100)
 
     category = models.ManyToManyField(RestaurantCategory)
 
