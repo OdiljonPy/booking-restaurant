@@ -1,8 +1,8 @@
 from django.db import models
-from ckeditor.fields import RichTextField
 from authentication.models import User
 
 
+# from admin panel
 class RestaurantCategory(models.Model):
     category_name = models.CharField(max_length=100)  # pan-asian, europe, usa, arabic, turkish, family
     created_at = models.DateTimeField(auto_now_add=True)
@@ -11,16 +11,15 @@ class RestaurantCategory(models.Model):
         return self.category_name
 
 
+
 class Restaurant(models.Model):
     author = models.ForeignKey(User, models.SET_NULL, null=True)  # need to discuss
-    name = models.CharField(max_length=255)
-    pictures = models.ImageField(upload_to='images/restaurants/')  # default= need to add
+    restaurant_name = models.CharField(max_length=255)
+    picture = models.ImageField(upload_to='images/restaurants/')  # default= need to add
     description = models.TextField()
     service_fee = models.IntegerField()
 
     address = models.CharField(max_length=100)
-    city = models.CharField(max_length=80)
-    state = models.CharField(max_length=100)
     phone = models.CharField(max_length=12)
     email = models.CharField(max_length=100)
 
@@ -34,13 +33,10 @@ class Restaurant(models.Model):
 
 
 class RoomType(models.Model):
-    room_type_name = models.CharField(max_length=100)  # luxe, family, primary,
+    room_amount_people = models.IntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.room_type_name
 
 
 class RestaurantRoom(models.Model):
@@ -63,7 +59,7 @@ class RestaurantRoom(models.Model):
 class RestaurantMenu(models.Model):
     name = models.CharField(max_length=255)
     price = models.IntegerField()
-    ingredients = RichTextField(max_length=1000)
+    ingredients = models.TextField(max_length=1000)
     description = models.TextField()
 
     created_at = models.DateTimeField(auto_now_add=True)

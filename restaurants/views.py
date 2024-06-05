@@ -1,6 +1,9 @@
 from django.shortcuts import render
-from rest_framework.generics import ListAPIView, CreateAPIView , RetrieveUpdateDestroyAPIView
-
+from rest_framework.viewsets import ViewSet
+from .models import Restaurant, RestaurantCategory
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import CategorySerializer, RestaurantSerializer
 
 
 # Restaurant Section
@@ -15,17 +18,33 @@ def restaurant_filter_view(request):
     pass
 
 
-class AddRestaurantView(CreateAPIView):
-    pass
+class RestaurantCategoryViewSet(ViewSet):
+    def restaurant_category(self, request):
+        category = RestaurantCategory.objects.all()
+        category_serialize = CategorySerializer(category, many=True).data
+        return Response(data={"list of categories": category_serialize}, status=status.HTTP_200_OK)
+
+
+class RestaurantViewSet(ViewSet):
+    def add_restaurant(self, request):
+        restaurant_obj = Restaurant.objects.create(restaurant_name=request.data['restaurant_name'],
+                                                   picture=request.data['picture'], description=request.data['description'],
+                                                   address=request.data['address'], phone=request.data['phone'],
+                                                   email=request.data['email'], service_fee=request.data['service_fee'])
+        restaurant_obj.save()
+        return Response(data={'message': 'Restaurant successfully created'}, status=status.HTTP_201_CREATED)
+
+    def show_restaurant(self, request):
+        restaurant_info = Restaurant.objects.all()
+        restaurant_serialize = RestaurantSerializer(restaurant_info, many=True).data
+        return Response(data={"List of restaurants": restaurant_serialize}, status=status.HTTP_200_OK)
 
 
 
-class AddRestaurantCategoryView(CreateAPIView):
-    pass
+class ActionRestaurantViewSet(ViewSet):
+    def show_restaurant(self, request, pk):
+        pass
 
-
-class ActionRestaurantView(RetrieveUpdateDestroyAPIView):
-    pass
 
 
 # Room section
@@ -77,5 +96,4 @@ def restaurant_comment_view(request):
 
 
 def restaurant_rate_view(request):
-
-
+    pass
