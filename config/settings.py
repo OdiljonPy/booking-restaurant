@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'management',
     'restaurants',
     'telegram',
+    'payment',
 ]
 
 MIDDLEWARE = [
