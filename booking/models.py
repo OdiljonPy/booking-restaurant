@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import datetime
 
 from django.db import models
 
@@ -19,7 +19,7 @@ class Occasion(models.Model):
 class Booking(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     booked_time = models.DateTimeField(auto_now_add=True)
-    planed_time = models.DateTimeField(default=timezone.now)
+    planed_time = models.DateTimeField(default=datetime.now)
     restaurants = models.ManyToManyField(Restaurant)
     room = models.ForeignKey(RestaurantRoom, on_delete=models.CASCADE)
     number_of_people = models.IntegerField(default=1)
