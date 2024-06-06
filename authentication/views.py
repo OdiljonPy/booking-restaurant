@@ -26,11 +26,16 @@ class UserCreateAPIView(CreateAPIView):
 class OTPViewSet(ViewSet):
 
     def send(self, request):
+        print(request)
+        print(request.user)
         user_obj = User.objects.filter(id=request.user.id).first()
+        print("+" * 50)
+        print(user_obj)
+        print(user_obj.id)
 
         if user_obj is None:
             return Response(data={'error': 'user not found!'}, status=status.HTTP_404_NOT_FOUND)
-        otp = OTP.objects.create(username=user_obj.username)
+        otp = OTP.objects.create(phone_number=user_obj.id)
         otp.save()
         send_opt(otp)
         return Response(data={'otp_key': otp.otp_key, 'created_at': otp.created_at}, status=status.HTTP_201_CREATED)
