@@ -11,7 +11,7 @@ from .serializers import CategorySerializer, RestaurantSerializer, RoomSerialize
 
 # RESTAURANT SECTION
 
-def restaurant_filter_view(request):
+def restaurant_filter_view(request): #
     """
     Restaurant filtering view - bu yerda Restaurantlarni royxati kerak bolsa shu view ga murojat qilinadi.
 
