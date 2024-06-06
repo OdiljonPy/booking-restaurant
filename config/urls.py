@@ -16,10 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+<<<<<<< authentication-users
+
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/v1/auth/', include('authentication.urls')),
+    path('api/v1/token/', TokenObtainPairView.as_view()),
+    path('api/v1/token/refresh/', TokenRefreshView.as_view()),
+    path('api/v1/token/verify/', TokenVerifyView.as_view())
     path('api/v1/restaurant/', include("restaurants.urls"))
+
 ]
 
 """
@@ -36,7 +44,7 @@ management
 
 urls
 
-auth: /register, /otp/verify, /otp/resend, /login, /password/reset, /password/update, /me, /token/refresh
+auth: /register, /token/refresh, /otp/verify, /otp/resend, /login, /password/reset, /password/update, /me, 
 restaurant: /[post], /{id}[patch, put, delete], /filter[rating, location, price, popular, search], /{id}/menu, /{id}/rooms
 booking: /[post], /my, /cancel[patch]
 payment: /pay[post], /card/add|remove
