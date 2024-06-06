@@ -76,11 +76,11 @@ class ActionRestaurantViewSet(ViewSet):
 
 class RoomTypeViewSet(ViewSet):
     def add_room_type(self, request):
-        room_type = RoomType.objects.create(room_type=request.data['room_type'])
+        room_type = RoomType.objects.create(room_type_name=request.data['room_type_name'])
         room_type.save()
         return Response(data={"message": f"{room_type} type is created successfully"}, status=status.HTTP_201_CREATED)
 
-    def show_room_type(request):
+    def show_room_type(self, request):
         room_type = RoomType.objects.all()
         room_type_serialize = RoomTypeSerializer(room_type, many=True).data
         return Response(data={"list of room types": room_type_serialize}, status=status.HTTP_200_OK)
@@ -88,14 +88,14 @@ class RoomTypeViewSet(ViewSet):
 
 class RoomTypeActionViewSet(ViewSet):
     #Need to fix
-    def edit_room_type(request, pk):
+    def edit_room_type(self, request, pk):
         room_type = RoomType.objects.filter(id=pk).first()
         room_type['room_type'] = request.data['room_type']
         room_type.save(update_fields=['room_type'])
         message = f"{room_type} type was updated"
         return Response(data={"message": message}, status=status.HTTP_200_OK)
 
-    def delete_room_type(request, pk):
+    def delete_room_type(self, request, pk):
         room_type = RoomType.objects.filter(id=pk).first()
         message = f"{room_type} type was deleted"
         del room_type
@@ -144,7 +144,7 @@ class RestaurantRoomActionViewSet(ViewSet):
 
 
     #Need to fix.
-    def edit_room(request, pk):
+    def edit_room(self, request, pk):
         room = RestaurantRoom.objects.filter(id=pk).first()
         room['room_name'] = request.data['room_name']
         room['pictures'] = request.data['pictures']
@@ -154,7 +154,7 @@ class RestaurantRoomActionViewSet(ViewSet):
         room_serialize = RoomSerializer(room).data
         return Response(data={"message": f"Information of {room_serialize} were changed"}, status=status.HTTP_200_OK)
 
-    def delete_room(request, pk):
+    def delete_room(self, request, pk):
         room = RestaurantRoom.objects.filter(id=pk).first()
         message = f"{room} was deleted"
         del room
@@ -189,7 +189,7 @@ class RestaurantMenuActionsView(ViewSet):
         return Response(data={"menu_details": menu_serialize}, status=status.HTTP_200_OK)
 
     #Need to fix.
-    def edit_menu(request, pk):
+    def edit_menu(self, request, pk):
         menu = RestaurantMenu.objects.filter(id=pk).first()
         menu['name'] = request.data['name']
         menu['price'] = request.data['price']
@@ -199,7 +199,7 @@ class RestaurantMenuActionsView(ViewSet):
         message = f"{menu.name} is changed"
         return Response(data={"message": message}, status=status.HTTP_200_OK)
 
-    def delete_menu(request, pk):
+    def delete_menu(self, frequest, pk):
         menu = RestaurantMenu.objects.filter(id=pk).first()
         message = f"{menu.name} is deleted"
         del menu

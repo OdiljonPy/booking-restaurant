@@ -5,12 +5,12 @@ from .views import RestaurantCategoryViewSet, RestaurantViewSet, RoomTypeViewSet
 urlpatterns = [
     path('category/', RestaurantCategoryViewSet.as_view({'get': 'restaurant_category'})),
     path('add/', RestaurantViewSet.as_view({'post': 'add_restaurant'})),
-    path('actions/<int:pk>', ActionRestaurantViewSet.as_view({'get': 'show_restaurant_details'})),
+    path('actions/<int:pk>/', ActionRestaurantViewSet.as_view({'get': 'show_restaurant_detail'})),
 
     path('room-type/', RoomTypeViewSet.as_view({'get': 'show_room_type', 'post': 'add_room_type'})),
-    path('room-type/actions', RoomTypeActionViewSet.as_view({'patch': 'edit_room_type', 'delete': 'delete_room_type'})),
+    path('room-type/actions/<int:pk>/', RoomTypeActionViewSet.as_view({'patch': 'edit_room_type', 'delete': 'delete_room_type'})),
 
-    path('rooms/', RestaurantRoomViewSet.as_view({'get': 'show_restaurant_room'})),
+    path('rooms/', RestaurantRoomViewSet.as_view({'get': 'show_restaurant_room', 'post': 'add_room'})),
     path('rooms/actions/',
          RestaurantRoomActionViewSet.as_view({'get': 'show_room_detail', 'patch': 'edit_room', 'delete': 'delete_room'})),
 
