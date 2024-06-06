@@ -1,5 +1,6 @@
 from django.shortcuts import render
 
+
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
@@ -103,12 +104,32 @@ class RoomTypeActionViewSet(ViewSet):
 
 
 class RestaurantRoomViewSet(ViewSet):
-    """
-    Restaurantlarni room lari ni royxat korinishda olish uchun
+=======
+    pass
 
-    Diqqat: {id} - restaurant id si jonatilish shart
-    Talab qilinmaydi: User ixtiyoriy bolishi kerak, royxatdan otgan otmagan, admin admin emas ...
+
+def restaturant_add_view(request):
     """
+    Yangi restaurant qoshish uchun ishlatiladi.
+
+    Talab qilinadi: Bunig uchun faqat Ma'lum toifadagi royxatdan otgan va shu api
+    ga dostupi bor login qilgan user bolishi shart.
+    """
+    pass
+
+
+def restaturant_actions_view(request):
+    """
+    Bu yerda restaurant ga tegishli amallarni request type ga qarab delete, get detail, edit, qilish amallarini bajarish
+    uchun ishlatiladi.
+
+    Diqqat: {id} - restaurant id sini parametr sifatida user tarafidan jonatilishi kerak.
+    Talab qilinadi: Edit yoki delete qilish uchun user Super admin yoki, Restaurant egasi, Tzim manageri bolishi kerak
+    """
+    pass
+
+
+# Room section
 
     def add_room(self, request):
         room = RestaurantRoom.objects.create(
@@ -130,12 +151,6 @@ class RestaurantRoomViewSet(ViewSet):
 
 
 class RestaurantRoomActionViewSet(ViewSet):
-    """
-    Restaurant uchun yangi room qoshish uchun ishlatiladi.
-
-    Diqqat: {id} - restaurant id si jonatilish shart
-    Talab qilinadi: User restaurant egasi, yoki tizim adminstratori bolishi kerak
-    """
 
     def show_room_detail(self, request, pk):
         room = RestaurantRoom.objects.filter(restaurant_id=pk).first()
@@ -204,6 +219,7 @@ class RestaurantMenuActionsView(ViewSet):
         message = f"{menu.name} is deleted"
         del menu
         return Response(data={"message": message}, status=status.HTTP_200_OK)
+
 
 
 # Comments and Reviews

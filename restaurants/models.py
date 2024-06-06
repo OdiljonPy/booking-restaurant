@@ -2,7 +2,6 @@ from django.db import models
 from authentication.models import User
 
 
-# from admin panel
 class RestaurantCategory(models.Model):
     category_name = models.CharField(max_length=100)  # pan-asian, europe, usa, arabic, turkish, family
     created_at = models.DateTimeField(auto_now_add=True)

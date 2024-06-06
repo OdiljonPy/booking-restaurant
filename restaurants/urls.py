@@ -18,4 +18,5 @@ urlpatterns = [
     path('menu/actions/',
          RestaurantMenuActionsView.as_view({'get': 'show_menu_detail', 'patch': 'edit_menu', 'delete': 'delete_menu'}))
 
+
 ]
