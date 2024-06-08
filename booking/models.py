@@ -18,8 +18,6 @@ class Occasion(models.Model):
 
 class Booking(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    booked_time = models.DateTimeField(auto_now_add=True)
-    planed_time = models.DateTimeField(default=datetime.now)
     restaurants = models.ManyToManyField(Restaurant)
     room = models.ForeignKey(RestaurantRoom, on_delete=models.CASCADE)
     number_of_people = models.IntegerField(default=1)
@@ -28,7 +26,10 @@ class Booking(models.Model):
     contact_username = models.CharField(max_length=120)
     comment = models.TextField(blank=True, null=True)
     occasion = models.ManyToManyField(Occasion, blank=True, null=True)
+    status = models.BooleanField(default=True)
+    paying_status = models.BooleanField(default=False)
+    booked_time = models.DateTimeField(auto_now_add=True)
+    planed_time = models.DateTimeField(default=datetime.now)
 
     def __str__(self):
         return self.restaurants.name
-
