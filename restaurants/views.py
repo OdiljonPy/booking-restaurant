@@ -11,13 +11,12 @@ from .serializers import CategorySerializer, RestaurantSerializer, RoomSerialize
 
 # RESTAURANT SECTION
 
-def restaurant_filter_view(request):
-    """
-    Restaurant filtering view - bu yerda Restaurantlarni royxati kerak bolsa shu view ga murojat qilinadi.
-
-    Diqqat: Ma'lum bir paremetrlar qabul qilinadi filterlash uchun, xech qanday parametr qabul qilinmasa toliq royxat
-    pagination bilan qaytariladi.
-    """
+class RestaurantFilterViewSet(ViewSet):
+    def restaurant_filter_view(self, request, *args, **kwargs):
+        params = kwargs
+        restaurants = Restaurant.objects.filter(restaurant_name=params['pk'])
+        restaurants_serialize = RestaurantSerializer(restaurants, many=True).data
+        return Response(data={'Result': restaurants_serialize}, status=status.HTTP_200_OK)
 
     def show_restaurant(self, request):
         restaurant_info = Restaurant.objects.all()

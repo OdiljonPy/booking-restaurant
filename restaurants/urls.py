@@ -1,9 +1,11 @@
 from django.urls import path
 from .views import RestaurantCategoryViewSet, RestaurantViewSet, RoomTypeViewSet, RestaurantRoomViewSet, \
     RestaurantRoomActionViewSet, RoomTypeActionViewSet, RestaurantMenuViewSet, RestaurantMenuActionsView, \
-    ActionRestaurantViewSet
+    ActionRestaurantViewSet, RestaurantFilterViewSet
 
 urlpatterns = [
+    path('filter/', RestaurantFilterViewSet.as_view({'get': 'show_restaurant'})),
+    path('filter/<str:pk>/', RestaurantFilterViewSet.as_view({'get': 'restaurant_filter_view'})),
     path('category/', RestaurantCategoryViewSet.as_view({'get': 'restaurant_category'})),
     path('add/', RestaurantViewSet.as_view({'post': 'add_restaurant'})),
     path('actions/<int:pk>/', ActionRestaurantViewSet.as_view({'get': 'show_restaurant_detail'})),
