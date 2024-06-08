@@ -6,7 +6,8 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 
 from .models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom, RestaurantMenu
-from .serializers import CategorySerializer, RestaurantSerializer, RoomSerializer, RoomTypeSerializer, MenuSerializer
+from .serializers import (CategorySerializer, RestaurantSerializer,
+                          RoomSerializer, RoomTypeSerializer, MenuSerializer, CommentSerializer)
 
 
 # RESTAURANT SECTION
@@ -195,8 +196,20 @@ class RestaurantMenuActionsView(ViewSet):
 
 # Comments and Reviews
 
-def restaurant_comment_view(request):
-    pass
+class CommentViewSet(ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, restaurant_id):
+        comments = Comment.objects.filter(restaurant_id=restaurant_id)
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def create(self, request):
+        serializer = CommentSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(user=self.request.user)
+            return Response(data={"message": "Comment successfully added"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def restaurant_rate_view(request):
