@@ -7,7 +7,6 @@ from authentication.utils import generate_otp_code
 
 
 class User(AbstractUser):
-    email = False
     username = models.CharField(max_length=14, unique=True)
 
 
