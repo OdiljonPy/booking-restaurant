@@ -1,8 +1,10 @@
 import uuid
 from datetime import timedelta, datetime
-
+from booking.models import Booking
 from .utils import generate_otp_code
 from django.db import models
+from authentication.models import User
+from restaurants.models import Restaurant
 
 
 class Cards(models.Model):
@@ -10,7 +12,7 @@ class Cards(models.Model):
     expire_month = models.IntegerField(default=0, validators=[])
     expire_year = models.IntegerField(default=0, validators=[])
     phone_number = models.IntegerField(max_length=12, validators=[])
-    owner_name = models.CharField(max_length=120, validators=[])
+    card_holder = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.UUIDField(default=uuid.uuid4, editable=False)
     balance = models.FloatField(default=0)
 
@@ -38,5 +40,10 @@ class OTP(models.Model):
         return str(self.otp_key)
 
 
-class Booking(models.Model):
-    pass
+class PaymentWithHistory(models.Model):
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE)
+    card = models.ForeignKey(Cards, on_delete=models.CASCADE)
+    restaurants = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
