@@ -1,9 +1,9 @@
 from django.shortcuts import render
 
-
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 
 from .models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom, RestaurantMenu
 from .serializers import CategorySerializer, RestaurantSerializer, RoomSerializer, RoomTypeSerializer, MenuSerializer
@@ -11,27 +11,28 @@ from .serializers import CategorySerializer, RestaurantSerializer, RoomSerialize
 
 # RESTAURANT SECTION
 
-def restaurant_filter_view(request):
-    """
-    Restaurant filtering view - bu yerda Restaurantlarni royxati kerak bolsa shu view ga murojat qilinadi.
-
-    Diqqat: Ma'lum bir paremetrlar qabul qilinadi filterlash uchun, xech qanday parametr qabul qilinmasa toliq royxat
-    pagination bilan qaytariladi.
-    """
+class RestaurantFilterViewSet(ViewSet):
+    def restaurant_filter_view(self, request, *args, **kwargs):
+        params = kwargs
+        restaurants = Restaurant.objects.filter(restaurant_name=params['pk'])
+        restaurants_serialize = RestaurantSerializer(restaurants, many=True).data
+        return Response(data={'Result': restaurants_serialize}, status=status.HTTP_200_OK)
 
     def show_restaurant(self, request):
         restaurant_info = Restaurant.objects.all()
         restaurant_serialize = RestaurantSerializer(restaurant_info, many=True).data
         return Response(data={"List of restaurants": restaurant_serialize}, status=status.HTTP_200_OK)
 
-#done
+
+# done
 class RestaurantCategoryViewSet(ViewSet):
     def restaurant_category(self, request):
         category = RestaurantCategory.objects.all()
         category_serialize = CategorySerializer(category, many=True).data
         return Response(data={"list of categories": category_serialize}, status=status.HTTP_200_OK)
 
-#done
+
+# done
 class RestaurantViewSet(ViewSet):
 
     def add_restaurant(self, request):
@@ -46,31 +47,25 @@ class RestaurantViewSet(ViewSet):
         restaurant_obj.save()
         return Response(data={'message': 'Restaurant successfully created'}, status=status.HTTP_201_CREATED)
 
-
+# done
 class ActionRestaurantViewSet(ViewSet):
     def show_restaurant_detail(self, request, pk):
         restaurant_detail = Restaurant.objects.filter(id=pk).first()
         restaurant_serialize = RestaurantSerializer(restaurant_detail).data
         return Response(data={"restaurant_detail": restaurant_serialize}, status=status.HTTP_200_OK)
 
-    #Need to fix.
+    # Need to fix.
     def edit_restaurant(self, request, pk):
-        restaurant = Restaurant.objects.filter(id=pk).first()
-        restaurant['restaurant_name'] = request.data['restaurant_name']
-        restaurant['picture'] = request.data['picture']
-        ...
-        restaurant.save(update_fields=['restaurant_name', 'picture'])
-        restaurant_serialize = RestaurantSerializer(restaurant).data
-        return Response(data={"message": f"Information of {restaurant_serialize}  were changed"},
-                        status=status.HTTP_200_OK)
+        obj = Restaurant.objects.filter(id=pk).first()
+        serializer = RestaurantSerializer(obj, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
 
     def delete_restaurant(self, request, pk):
         restaurant = Restaurant.objects.filter(id=pk).first()
         message = f"{restaurant.restaurant_name} was deleted"
         del restaurant
         return Response(data={"message": message}, status=status.HTTP_200_OK)
-
-
 
 
 # ROOM SECTION.
@@ -88,13 +83,13 @@ class RoomTypeViewSet(ViewSet):
 
 
 class RoomTypeActionViewSet(ViewSet):
-    #Need to fix
+    # Need to fix
     def edit_room_type(self, request, pk):
-        room_type = RoomType.objects.filter(id=pk).first()
-        room_type['room_type'] = request.data['room_type']
-        room_type.save(update_fields=['room_type'])
-        message = f"{room_type} type was updated"
-        return Response(data={"message": message}, status=status.HTTP_200_OK)
+        obj = RoomType.objects.filter(id=pk).first()
+        serializer_type = RoomTypeSerializer(obj, data=request.data, partial=True).data
+        if serializer_type.is_valid():
+            serializer_type.save()
+
 
     def delete_room_type(self, request, pk):
         room_type = RoomType.objects.filter(id=pk).first()
@@ -104,32 +99,12 @@ class RoomTypeActionViewSet(ViewSet):
 
 
 class RestaurantRoomViewSet(ViewSet):
-=======
-    pass
-
-
-def restaturant_add_view(request):
     """
-    Yangi restaurant qoshish uchun ishlatiladi.
+    Restaurantlarni room lari ni royxat korinishda olish uchun
 
-    Talab qilinadi: Bunig uchun faqat Ma'lum toifadagi royxatdan otgan va shu api
-    ga dostupi bor login qilgan user bolishi shart.
+    Diqqat: {id} - restaurant id si jonatilish shart
+    Talab qilinmaydi: User ixtiyoriy bolishi kerak, royxatdan otgan otmagan, admin admin emas ...
     """
-    pass
-
-
-def restaturant_actions_view(request):
-    """
-    Bu yerda restaurant ga tegishli amallarni request type ga qarab delete, get detail, edit, qilish amallarini bajarish
-    uchun ishlatiladi.
-
-    Diqqat: {id} - restaurant id sini parametr sifatida user tarafidan jonatilishi kerak.
-    Talab qilinadi: Edit yoki delete qilish uchun user Super admin yoki, Restaurant egasi, Tzim manageri bolishi kerak
-    """
-    pass
-
-
-# Room section
 
     def add_room(self, request):
         room = RestaurantRoom.objects.create(
@@ -151,23 +126,24 @@ def restaturant_actions_view(request):
 
 
 class RestaurantRoomActionViewSet(ViewSet):
+    """
+    Restaurant uchun yangi room qoshish uchun ishlatiladi.
+
+    Diqqat: {id} - restaurant id si jonatilish shart
+    Talab qilinadi: User restaurant egasi, yoki tizim adminstratori bolishi kerak
+    """
 
     def show_room_detail(self, request, pk):
         room = RestaurantRoom.objects.filter(restaurant_id=pk).first()
         room_serialize = RoomSerializer(room, many=True).data
         return Response(data={"room_details": room_serialize}, status=status.HTTP_200_OK)
 
-
-    #Need to fix.
+    # Need to fix.
     def edit_room(self, request, pk):
-        room = RestaurantRoom.objects.filter(id=pk).first()
-        room['room_name'] = request.data['room_name']
-        room['pictures'] = request.data['pictures']
-        room['description'] = request.data['description']
-        ...
-        room.save(update_fields=['room_name', 'pictures', 'description'])
-        room_serialize = RoomSerializer(room).data
-        return Response(data={"message": f"Information of {room_serialize} were changed"}, status=status.HTTP_200_OK)
+        obj = RestaurantRoom.objects.filter(id=pk).first()
+        serializer_room = RoomSerializer(obj, data=request.data, partial=True).data
+        if serializer_room.is_valid():
+            serializer_room.save()
 
     def delete_room(self, request, pk):
         room = RestaurantRoom.objects.filter(id=pk).first()
@@ -203,23 +179,18 @@ class RestaurantMenuActionsView(ViewSet):
         menu_serialize = MenuSerializer(menu, many=True).data
         return Response(data={"menu_details": menu_serialize}, status=status.HTTP_200_OK)
 
-    #Need to fix.
+    # Need to fix.
     def edit_menu(self, request, pk):
-        menu = RestaurantMenu.objects.filter(id=pk).first()
-        menu['name'] = request.data['name']
-        menu['price'] = request.data['price']
-        ...
-        menu.save(update_fields=['name', 'price'])
-        menu_serialize = MenuSerializer(menu).data
-        message = f"{menu.name} is changed"
-        return Response(data={"message": message}, status=status.HTTP_200_OK)
+        obj = RestaurantMenu.objects.filter(id=pk).first()
+        serializer_menu = MenuSerializer(obj, data=request.data, partial=True).data
+        if serializer_menu.is_valid():
+            serializer_menu.save()
 
     def delete_menu(self, frequest, pk):
         menu = RestaurantMenu.objects.filter(id=pk).first()
         message = f"{menu.name} is deleted"
         del menu
         return Response(data={"message": message}, status=status.HTTP_200_OK)
-
 
 
 # Comments and Reviews
