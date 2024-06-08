@@ -16,27 +16,24 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
 from django.conf.urls.static import static
-from rest_framework_swagger.views import get_swagger_view
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
 from django.conf import settings
 
-schema_view = get_schema_view(
-    openapi.Info(
-        title="Ordering Rooms and Meals",
-        default_version='v1', ),
-    public=True,
-    permission_classes=(permissions.AllowAny,),
-)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/restaurant/', include("restaurants.urls")),
     path('api/v1/booking/', include("booking.urls")),
-    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('api/v1/auth/', include('authentication.urls')),
+    path('api/v1/token/', TokenObtainPairView.as_view()),
+    path('api/v1/token/refresh/', TokenRefreshView.as_view()),
+    path('api/v1/token/verify/', TokenVerifyView.as_view()),
+    path('api/v1/restaurant/', include("restaurants.urls")),
 
 ]
 
@@ -54,7 +51,7 @@ management
 
 urls
 
-auth: /register, /otp/verify, /otp/resend, /login, /password/reset, /password/update, /me, /token/refresh
+auth: /register, /token/refresh, /otp/verify, /otp/resend, /login, /password/reset, /password/update, /me, 
 restaurant: /[post], /{id}[patch, put, delete], /filter[rating, location, price, popular, search], /{id}/menu, /{id}/rooms
 booking: /[post], /my, /cancel[patch]
 payment: /pay[post], /card/add|remove
