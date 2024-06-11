@@ -31,11 +31,11 @@ admin.site.index_title = 'Welcome to dashboard'
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="MBG Store APIv1",
+        title="Booking Restaurants APIv1",
         default_version="v1",
-        description="API for project MBG Store",
+        description="API for project Booking Restaurants",
         terms_of_service="",
-        contact=openapi.Contact(email="odiljonabduvaitov@gmail.com"),
+        contact=openapi.Contact(email="fsp-6-23@gmail.com"),
         license=openapi.License(name="BSD License"),
     ),
     public=True,
