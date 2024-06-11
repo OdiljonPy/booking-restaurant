@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 
-from .models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom, RestaurantMenu
+from .models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom, RestaurantMenu, Comment
 from .serializers import (CategorySerializer, RestaurantSerializer,
                           RoomSerializer, RoomTypeSerializer, MenuSerializer, CommentSerializer)
 
@@ -187,7 +187,7 @@ class RestaurantMenuActionsView(ViewSet):
         if serializer_menu.is_valid():
             serializer_menu.save()
 
-    def delete_menu(self, frequest, pk):
+    def delete_menu(self, request, pk):
         menu = RestaurantMenu.objects.filter(id=pk).first()
         message = f"{menu.name} is deleted"
         del menu

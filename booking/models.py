@@ -33,3 +33,24 @@ class Booking(models.Model):
 
     def __str__(self):
         return self.restaurants.name
+
+
+class OrderFreeTable(models.Model):
+    table_name = models.CharField(max_length=80)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.table_name
+
+
+class OrderFreeTime(models.Model):
+    ordered_time = models.CharField(max_length=20)
+    table = models.ForeignKey(OrderFreeTable, on_delete=models.CASCADE)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.ordered_time

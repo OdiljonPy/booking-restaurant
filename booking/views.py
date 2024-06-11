@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny
 
-from booking.models import Booking, Occasion
-from booking.serializers import BookingSerializer, OccasionSerializer
+from booking.models import Booking, Occasion, OrderFreeTable, OrderFreeTime
+from booking.serializers import BookingSerializer, OccasionSerializer, OrderFreeTableSerializer, OrderFreeTimeSerializer
 
 
 class BookingViewSet(ViewSet):
@@ -63,17 +63,22 @@ class OccasionAcctionsViewSet(ViewSet):
         occasion = Occasion.objects.get(pk=request.data['occasion'])
 
 
-def free_tables_view(request):
-    pass
+class FreeOrderViewSet(ViewSet):
 
+    def add_free_table(self, request):
+        if request.method == "POST":
+            obj = OrderFreeTable.objects.create(table_name=request.data['table_name'])
+            obj.save()
+            return Response(data={'message': 'Table successfully created'}, status=status.HTTP_201_CREATED)
+        table = OrderFreeTable.objects.all()
+        serializer_table = OrderFreeTableSerializer(table, many=True).data
+        return Response(data={'message': serializer_table}, status=status.HTTP_200_OK)
 
-def free_times_view(request):
-    pass
-
-
-def ordered_tables_view(request):
-    pass
-
-
-def ordered_times_view(request):
-    pass
+    def ordered_times_view(self, request, pk):
+        if request.method == 'POST':
+            obj = OrderFreeTime.objects.create(table_id=pk, free_time=request.data['free_time'])
+            obj.save()
+            return Response(data={'message': 'You are successfully order table'}, status=status.HTTP_201_CREATED)
+        time = OrderFreeTime.objects.all()
+        serializer = OrderFreeTimeSerializer(time, many=True).data
+        return Response(data={'message': serializer}, status=status.HTTP_200_OK)
