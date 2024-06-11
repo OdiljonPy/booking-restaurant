@@ -8,11 +8,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from .models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom, RestaurantMenu, Comment
 from .serializers import (CategorySerializer, RestaurantSerializer,
                           RoomSerializer, RoomTypeSerializer, MenuSerializer, CommentSerializer)
+from .permission import IsOwner
 
 
 # RESTAURANT SECTION
 
 class RestaurantFilterViewSet(ViewSet):
+    permission_classes = [AllowAny]
     def restaurant_filter_view(self, request, *args, **kwargs):
         params = kwargs
         restaurants = Restaurant.objects.filter(restaurant_name=params['pk'])
@@ -27,6 +29,7 @@ class RestaurantFilterViewSet(ViewSet):
 
 # done
 class RestaurantCategoryViewSet(ViewSet):
+    permission_classes = [AllowAny]
     def restaurant_category(self, request):
         category = RestaurantCategory.objects.all()
         category_serialize = CategorySerializer(category, many=True).data
@@ -35,6 +38,7 @@ class RestaurantCategoryViewSet(ViewSet):
 
 # done
 class RestaurantViewSet(ViewSet):
+    permission_classes = [IsAuthenticated, IsOwner]
 
     def add_restaurant(self, request):
         # author = request.user
@@ -50,6 +54,7 @@ class RestaurantViewSet(ViewSet):
 
 # done
 class ActionRestaurantViewSet(ViewSet):
+    permission_classes = [IsAuthenticated]
     def show_restaurant_detail(self, request, pk):
         restaurant_detail = Restaurant.objects.filter(id=pk).first()
         restaurant_serialize = RestaurantSerializer(restaurant_detail).data
@@ -72,6 +77,7 @@ class ActionRestaurantViewSet(ViewSet):
 # ROOM SECTION.
 
 class RoomTypeViewSet(ViewSet):
+    permission_classes = [IsAuthenticated]
     def add_room_type(self, request):
         room_type = RoomType.objects.create(room_type_name=request.data['room_type_name'])
         room_type.save()
@@ -84,6 +90,7 @@ class RoomTypeViewSet(ViewSet):
 
 
 class RoomTypeActionViewSet(ViewSet):
+    permission_classes = [IsAuthenticated, IsOwner]
     # Need to fix
     def edit_room_type(self, request, pk):
         obj = RoomType.objects.filter(id=pk).first()
@@ -100,6 +107,7 @@ class RoomTypeActionViewSet(ViewSet):
 
 
 class RestaurantRoomViewSet(ViewSet):
+    permission_classes = [IsAuthenticated]
     """
     Restaurantlarni room lari ni royxat korinishda olish uchun
 
@@ -127,6 +135,7 @@ class RestaurantRoomViewSet(ViewSet):
 
 
 class RestaurantRoomActionViewSet(ViewSet):
+    permission_classes = [IsAuthenticated, IsOwner]
     """
     Restaurant uchun yangi room qoshish uchun ishlatiladi.
 
@@ -156,6 +165,7 @@ class RestaurantRoomActionViewSet(ViewSet):
 # Menu section
 
 class RestaurantMenuViewSet(ViewSet):
+    permission_classes = [IsAuthenticated]
     def show_restaurant_menu(self, request):
         menu = RestaurantMenu.objects.filter(restaurant_id=request.data['restaurant_id'])
         menu_serialize = MenuSerializer(menu, many=True).data
@@ -175,6 +185,7 @@ class RestaurantMenuViewSet(ViewSet):
 
 
 class RestaurantMenuActionsView(ViewSet):
+    permission_classes = [IsAuthenticated, IsOwner]
     def show_menu_detail(self, request, pk):
         menu = RestaurantMenu.objects.filter(id=pk).first()
         menu_serialize = MenuSerializer(menu, many=True).data

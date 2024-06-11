@@ -1,13 +1,15 @@
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.permissions import BasePermission
 
 
-class ExampleView(APIView):
-    permission_classes = [IsAuthenticated]
+class IsOwner(BasePermission):
+    def has_permission(self, request, view):
+        if request.author.is_authenticated:
+            return True
+        return False
 
-    def get(self, request, format=None):
-        content = {
-            'status': 'request was permitted'
-        }
-        return Response(content)
+    def has_object_permission(self, request, view, obj):
+        if obj.author.id != request.author.id and not request.author.is_authenticated:
+            if request.method in ['HEAD', 'GET', 'OPTIONS']:
+                return True
+            return False
+        return True
