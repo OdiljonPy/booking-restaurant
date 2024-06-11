@@ -1,6 +1,5 @@
 from django.shortcuts import render
 
-
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
@@ -24,14 +23,16 @@ def restaurant_filter_view(request):
         restaurant_serialize = RestaurantSerializer(restaurant_info, many=True).data
         return Response(data={"List of restaurants": restaurant_serialize}, status=status.HTTP_200_OK)
 
-#done
+
+# done
 class RestaurantCategoryViewSet(ViewSet):
     def restaurant_category(self, request):
         category = RestaurantCategory.objects.all()
         category_serialize = CategorySerializer(category, many=True).data
         return Response(data={"list of categories": category_serialize}, status=status.HTTP_200_OK)
 
-#done
+
+# done
 class RestaurantViewSet(ViewSet):
 
     def add_restaurant(self, request):
@@ -53,7 +54,7 @@ class ActionRestaurantViewSet(ViewSet):
         restaurant_serialize = RestaurantSerializer(restaurant_detail).data
         return Response(data={"restaurant_detail": restaurant_serialize}, status=status.HTTP_200_OK)
 
-    #Need to fix.
+    # Need to fix.
     def edit_restaurant(self, request, pk):
         restaurant = Restaurant.objects.filter(id=pk).first()
         restaurant['restaurant_name'] = request.data['restaurant_name']
@@ -71,8 +72,6 @@ class ActionRestaurantViewSet(ViewSet):
         return Response(data={"message": message}, status=status.HTTP_200_OK)
 
 
-
-
 # ROOM SECTION.
 
 class RoomTypeViewSet(ViewSet):
@@ -88,7 +87,7 @@ class RoomTypeViewSet(ViewSet):
 
 
 class RoomTypeActionViewSet(ViewSet):
-    #Need to fix
+    # Need to fix
     def edit_room_type(self, request, pk):
         room_type = RoomType.objects.filter(id=pk).first()
         room_type['room_type'] = request.data['room_type']
@@ -104,7 +103,6 @@ class RoomTypeActionViewSet(ViewSet):
 
 
 class RestaurantRoomViewSet(ViewSet):
-=======
     pass
 
 
@@ -128,8 +126,7 @@ def restaturant_actions_view(request):
     """
     pass
 
-
-# Room section
+    # Room section
 
     def add_room(self, request):
         room = RestaurantRoom.objects.create(
@@ -157,8 +154,7 @@ class RestaurantRoomActionViewSet(ViewSet):
         room_serialize = RoomSerializer(room, many=True).data
         return Response(data={"room_details": room_serialize}, status=status.HTTP_200_OK)
 
-
-    #Need to fix.
+    # Need to fix.
     def edit_room(self, request, pk):
         room = RestaurantRoom.objects.filter(id=pk).first()
         room['room_name'] = request.data['room_name']
@@ -203,7 +199,7 @@ class RestaurantMenuActionsView(ViewSet):
         menu_serialize = MenuSerializer(menu, many=True).data
         return Response(data={"menu_details": menu_serialize}, status=status.HTTP_200_OK)
 
-    #Need to fix.
+    # Need to fix.
     def edit_menu(self, request, pk):
         menu = RestaurantMenu.objects.filter(id=pk).first()
         menu['name'] = request.data['name']
@@ -219,7 +215,6 @@ class RestaurantMenuActionsView(ViewSet):
         message = f"{menu.name} is deleted"
         del menu
         return Response(data={"message": message}, status=status.HTTP_200_OK)
-
 
 
 # Comments and Reviews
