@@ -29,8 +29,10 @@ class BookingActionsViewSet(ViewSet):
         return Response(data={'data': booking_serializer.data, 'message': f'{pk} id li buyurtma'},
                         status=status.HTTP_200_OK)
 
-    def pay_booking(self, request, *args, **kwargs):
-        pass
+    def pay_booking(self, request, pk):
+        booking_detail = Booking.objects.filter(id=pk).first()
+        booking_pay = {}
+        return Response(data={'data': booking_pay, 'message': f'{pk} id'}, )
 
     def cancel_booking(self, request, *args, **kwargs):
         pass
@@ -58,9 +60,14 @@ class OccasionViewSet(ViewSet):
         return Response(data={'occasions': occasions}, )
 
 
-class OccasionAcctionsViewSet(ViewSet):
-    def edit_occasion(self, request, *args, **kwargs):
-        occasion = Occasion.objects.get(pk=request.data['occasion'])
+class OccasionActionsViewSet(ViewSet):
+    def edit_occasion(self, request, pk):
+        occasion = Occasion.objects.filter(id=pk).first()
+        if occasion:
+            occasion.name = request.data['occasion_name']
+            occasion.save(update_fields=['occasion_name'])
+            return Response(data={"message": f"{occasion} data was changed"}, status=status.HTTP_200_OK)
+        return Response(data={"message": "Your data doesn't found"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class FreeOrderViewSet(ViewSet):
