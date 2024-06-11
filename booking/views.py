@@ -19,7 +19,7 @@ class BookingViewSet(ViewSet):
     def show_bookings(self, request):
         queryset = Booking.objects.all()
         bookings = BookingSerializer(queryset, many=True).data
-        return Response(data={'bookings': bookings}, )
+        return Response(data={'bookings': bookings}, status=status.HTTP_200_OK)
 
 
 class BookingActionsViewSet(ViewSet):

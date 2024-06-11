@@ -18,7 +18,7 @@ class Occasion(models.Model):
 
 class Booking(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    restaurants = models.ManyToManyField(Restaurant)
+    restaurants = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     room = models.ForeignKey(RestaurantRoom, on_delete=models.CASCADE)
     number_of_people = models.IntegerField(default=1)
     meals = models.ManyToManyField(RestaurantMenu, blank=True, null=True)
