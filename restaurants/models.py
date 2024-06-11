@@ -88,3 +88,18 @@ class RestaurantMenu(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Comment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    menu = models.ForeignKey(RestaurantMenu, on_delete=models.CASCADE)
+    comment = models.TextField()
+    is_visible = models.BooleanField(default=True)
+    rating = models.IntegerField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def str(self):
+        return self.comment
