@@ -1,10 +1,10 @@
 from django.urls import path
-from .views import UserCreateAPIView, auth_me, OTPViewSet
-
+from .views import UserViewSet, OtpViewSet, ChangeViewSet
 urlpatterns = [
-    path('register/', UserCreateAPIView.as_view()),
-    path('login/', auth_me),
+    path('register/', UserViewSet.as_view({'post': 'create'}), name='register'),
+    path('login/', UserViewSet.as_view({'post': 'login'}), name='login'),
+    path('verify/', OtpViewSet.as_view({'post': 'verify'}), name='verify'),
 
-    path('otp/send/', OTPViewSet.as_view({'post': 'send'})),
-    path('otp/verify/', OTPViewSet.as_view({'post': 'verify'})),
+    path('change/', ChangeViewSet.as_view({'post': 'change'}), name='change'),
+    # path('change_password/', change_password, name='change_password'),
 ]
