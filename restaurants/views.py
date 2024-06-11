@@ -29,11 +29,36 @@ class RestaurantFilterViewSet(ViewSet):
 
 # done
 class RestaurantCategoryViewSet(ViewSet):
+    def create_category(self, request):
+        category_serializer = CategorySerializer(data=request.data)
+        if category_serializer.is_valid():
+            category_serializer.save()
+            return Response({"message": "Category added successfully", "status": status.HTTP_201_CREATED})
+        return Response({"message": "please add the category name", "status": status.HTTP_400_BAD_REQUEST})
+
     permission_classes = [AllowAny]
     def restaurant_category(self, request):
         category = RestaurantCategory.objects.all()
         category_serialize = CategorySerializer(category, many=True).data
         return Response(data={"list of categories": category_serialize}, status=status.HTTP_200_OK)
+
+
+class RestaurantCategoryActionViewSet(ViewSet):
+    def detail_category(self, request, pk):
+        category = RestaurantCategory.objects.filter(pk=pk).first()
+        category_serializer = CategorySerializer(category).data
+        return Response(data={"category_details": category_serializer}, status=status.HTTP_200_OK)
+
+    def edit_category(self, request, pk):
+        pass
+
+    def delete_category(self, request, pk):
+        category = RestaurantCategory.objects.filter(pk=pk).first()
+        if category:
+            message = f"{category} was deleted successfully"
+            category.delete()
+            return Response(data={"message": message}, status=status.HTTP_204_NO_CONTENT)
+        return Response(data={"message": "Category doesn't find"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # done
@@ -66,11 +91,13 @@ class ActionRestaurantViewSet(ViewSet):
         serializer = RestaurantSerializer(obj, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            return Response(data={"message": "Data was saved"}, status=status.HTTP_202_ACCEPTED)
+        return Response(data={"message": "Data doesn't found"}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete_restaurant(self, request, pk):
         restaurant = Restaurant.objects.filter(id=pk).first()
         message = f"{restaurant.restaurant_name} was deleted"
-        del restaurant
+        restaurant.delete()
         return Response(data={"message": message}, status=status.HTTP_200_OK)
 
 
@@ -102,7 +129,7 @@ class RoomTypeActionViewSet(ViewSet):
     def delete_room_type(self, request, pk):
         room_type = RoomType.objects.filter(id=pk).first()
         message = f"{room_type} type was deleted"
-        del room_type
+        room_type.delete()
         return Response(data={"message": message}, status=status.HTTP_200_OK)
 
 
@@ -115,16 +142,19 @@ class RestaurantRoomViewSet(ViewSet):
     Talab qilinmaydi: User ixtiyoriy bolishi kerak, royxatdan otgan otmagan, admin admin emas ...
     """
 
-    def add_room(self, request):
+    def add_room(self, request, pk):
+        restaurant = Restaurant.objects.filter(id=pk).first(),
+        room_type = RoomType.objects.filter(id=request.data['room_type_id']).first()
+        print(pk, restaurant, room_type)
         room = RestaurantRoom.objects.create(
-            restaurant=Restaurant.objects.filter(id=request.data['restaurant_id']).first(),
-
+            restaurant=restaurant,
             room_name=request.data['room_name'],
             pictures=request.data['pictures'],
             description=request.data['description'],
             people_number=request.data['people_number'],
             waiters_number=request.data['waiters_number'],
-            room_type=RoomType.objects.filter(id=request.data['room_type_id']).first(), )
+            room_type=room_type,
+        )
         room.save()
         return Response(data={"message": f"{room} room is created successfully"}, status=status.HTTP_201_CREATED)
 
