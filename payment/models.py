@@ -1,17 +1,17 @@
 import uuid
 from datetime import timedelta, datetime
 from booking.models import Booking
-from .utils import generate_otp_code
+from .utils import generate_otp_code, uzb_number, pan_number, year_valid, month_valid
 from django.db import models
 from authentication.models import User
 from restaurants.models import Restaurant
 
 
 class Cards(models.Model):
-    pan = models.IntegerField(default=0, validators=[])
-    expire_month = models.IntegerField(default=0, validators=[])
-    expire_year = models.IntegerField(default=0, validators=[])
-    phone_number = models.IntegerField(max_length=12, validators=[])
+    pan = models.IntegerField(default=0, validators=[pan_number])
+    expire_month = models.IntegerField(default=0, validators=[month_valid])
+    expire_year = models.IntegerField(default=0, validators=[year_valid])
+    phone_number = models.IntegerField(max_length=12, validators=[uzb_number])
     card_holder = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.UUIDField(default=uuid.uuid4, editable=False)
     balance = models.FloatField(default=0)
@@ -20,13 +20,13 @@ class Cards(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.owner_name
+        return self.card_holder
 
 
 class OTP(models.Model):
     otp_key = models.UUIDField(default=uuid.uuid4)
     otp_code = models.IntegerField(default=generate_otp_code)
-    phone_number = models.CharField(max_length=12, validators=[])
+    phone_number = models.CharField(max_length=12, validators=[uzb_number])
     expire_date = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

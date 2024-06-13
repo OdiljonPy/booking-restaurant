@@ -33,26 +33,50 @@ class OTPViewSet(ViewSet):
         return Response(data={'card_token': card.token}, status=status.HTTP_200_OK)
 
 
+# class PaymentViewSet(ViewSet):
+#     def pay(self, request):
+#         card_obj = Cards.objects.filter(pan=request.data['pan'], expire_year=request.data['expire_year'],
+#                                         expire_month=request.data['expire_month']).first()
+#         restaurant_obj = PaymentWithHistory.restaurant.objects.filter(id=request.data['restaurant_id']).first()
+#         if restaurant_obj is None:
+#             return Response(data={'error': 'Restaurant not found'}, status=status.HTTP_404_NOT_FOUND)
+#         if card_obj is None:
+#             return Response(data={'error': 'Card not found'}, status=status.HTTP_404_NOT_FOUND)
+#         restaurant_balance = restaurant_obj.balance
+#         booking_id = request.data['booking_id']
+#         card_balance = card_obj.balance
+#         booking_price = PaymentWithHistory.booking.objects.filter(id=booking_id).price
+#         if card_balance >= booking_price:
+#             card_balance -= booking_price
+#             card_balance.save(update_fields=['balance'])
+#             restaurant_balance += booking_price
+#             restaurant_balance.save(update_fields=['balance'])
+#             return Response(data={'message': 'Your order booked successfully'}, status=status.HTTP_202_ACCEPTED)
+#         else:
+#             return Response(data={'message': 'You have not enough money for booking'},
+#                             status=status.HTTP_205_RESET_CONTENT)
+
+
+
 class PaymentViewSet(ViewSet):
     def pay(self, request):
-        card_obj = Cards.objects.filter(pan=request.data['pan'], expire_year=request.data['expire_year'],
-                                        expire_month=request.data['expire_month']).first()
-        restaurant_obj = PaymentWithHistory.restaurant.objects.filter(id=request.data['restaurant_id']).first()
-        if restaurant_obj is None:
+        token = request['token']
+        card = Cards.objects.filter(token=token).first()
+        restaurant = PaymentWithHistory.restaurant.objects.filter(id=request.data['restaurant_id']).first()
+        booking_id = request['booking_id']
+        booking_obj = PaymentWithHistory.booking.objects.filter(booking_id=booking_id).first()
+        if booking_obj is None:
+            return Response(data={'error': 'That booking not found'}, status=status.HTTP_404_NOT_FOUND)
+        if restaurant is None:
             return Response(data={'error': 'Restaurant not found'}, status=status.HTTP_404_NOT_FOUND)
-        if card_obj is None:
+        if card is None:
             return Response(data={'error': 'Card not found'}, status=status.HTTP_404_NOT_FOUND)
-        restaurant_balance = restaurant_obj.balance
-        booking_id = request.data['booking_id']
-        card_balance = card_obj.balance
-        booking_price = PaymentWithHistory.booking.objects.filter(id=booking_id).price
-        if card_balance >= booking_price:
-            card_balance -= booking_price
+        restaurant_balance = restaurant.balance
+        card_balance = card.balance
+        if card.balance >= booking_obj.price:
+            card_balance -= booking_obj.price
+            restaurant_balance += booking_obj.price
             card_balance.save(update_fields=['balance'])
-            restaurant_balance += booking_price
             restaurant_balance.save(update_fields=['balance'])
-            return Response(data={'message': 'Your order booked successfully'}, status=status.HTTP_202_ACCEPTED)
         else:
-            return Response(data={'message': 'You have not enough money for booking'},
-                            status=status.HTTP_205_RESET_CONTENT)
-
+            return Response({'message': 'There is not enough money In your card!'})
