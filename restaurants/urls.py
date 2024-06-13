@@ -5,8 +5,8 @@ from .views import RestaurantCategoryViewSet, RestaurantCategoryActionViewSet, R
     ActionRestaurantViewSet, RestaurantFilterViewSet, CommentViewSet
 
 urlpatterns = [
-    path('filter/', RestaurantFilterViewSet.as_view({'get': 'show_restaurant'})),
-    path('filter/<str:pk>/', RestaurantFilterViewSet.as_view({'get': 'restaurant_filter_view'})),
+    path('filter/all/', RestaurantFilterViewSet.as_view({'get': 'show_restaurant'})),
+    path('filter/', RestaurantFilterViewSet.as_view({'get': 'restaurant_filter_view'})),
     path('category/', RestaurantCategoryViewSet.as_view({'get': 'restaurant_category', 'post': 'create_category'})),
     path('category/actions/<int:pk>',
          RestaurantCategoryActionViewSet.as_view(

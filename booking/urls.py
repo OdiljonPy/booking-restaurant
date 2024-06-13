@@ -1,5 +1,5 @@
 from django.urls import path
-from booking.views import BookingViewSet, BookingActionsViewSet, OccasionViewSet, OccasionAcctionsViewSet, FreeOrderViewSet
+from booking.views import BookingViewSet, BookingActionsViewSet, OccasionViewSet, OccasionActionsViewSet, FreeOrderViewSet
 
 urlpatterns = [
     path('', BookingViewSet.as_view({'get': 'show_bookings', 'post': 'create_booking'})),
@@ -9,7 +9,7 @@ urlpatterns = [
     path('actions/paying/<int:pk>', BookingActionsViewSet.as_view({'post': 'pay_booking'})),
 
     path('occasions/', OccasionViewSet.as_view({'get': '', 'post': ''})),
-    path('occasions/actions/<int:pk>', OccasionAcctionsViewSet.as_view({'get': '', 'patch': '', 'delete': ''})),
+    path('occasions/actions/<int:pk>', OccasionActionsViewSet.as_view({'get': '', 'patch': '', 'delete': ''})),
 
     path('table/', FreeOrderViewSet.as_view({'post': 'add_free_table', 'get': 'add_free_table'})),
     path('order/<int:pk>', FreeOrderViewSet.as_view({'post': 'ordered_times_view'})),
