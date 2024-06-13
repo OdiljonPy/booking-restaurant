@@ -17,6 +17,7 @@ class Restaurant(models.Model):
                                 default='images/restaurants/default_restaurant.jpg')  # default= need to add
     description = models.TextField()
     service_fee = models.IntegerField()
+    balance = models.FloatField(default=0)
 
     booking_count_total = models.IntegerField(default=0)
     booking_count_day_by_day = models.IntegerField(default=0)
