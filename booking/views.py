@@ -8,6 +8,7 @@ from booking.models import Booking, Occasion, OrderFreeTable, OrderFreeTime, Ord
 from booking.serializers import BookingSerializer, OccasionSerializer, OrderFreeTableSerializer, \
     OrderFreeTimeSerializer
 
+
 class BookingViewSet(ViewSet):
     def create_booking(self, request, *args, **kwargs):
         booking_serializer = BookingSerializer(data=request.data)

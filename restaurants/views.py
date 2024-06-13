@@ -53,9 +53,6 @@ class RestaurantCategoryActionViewSet(ViewSet):
         category_serializer = CategorySerializer(category).data
         return Response(data={"category_details": category_serializer}, status=status.HTTP_200_OK)
 
-    def edit_category(self, request, pk):
-        pass
-
     def delete_category(self, request, pk):
         category = RestaurantCategory.objects.filter(pk=pk).first()
         if category:
@@ -91,7 +88,6 @@ class ActionRestaurantViewSet(ViewSet):
         restaurant_serialize = RestaurantSerializer(data=restaurant_detail).data
         return Response(data={"restaurant_detail": restaurant_serialize}, status=status.HTTP_200_OK)
 
-    # Need to fix.
     def edit_restaurant(self, request, pk):
         obj = Restaurant.objects.filter(id=pk).first()
         serializer = RestaurantSerializer(obj, data=request.data, partial=True)
@@ -153,7 +149,6 @@ class RestaurantRoomViewSet(ViewSet):
     def add_room(self, request, pk):
         restaurant = Restaurant.objects.filter(id=pk).first(),
         room_type = RoomType.objects.filter(id=request.data['room_type_id']).first()
-        print(pk, restaurant, room_type)
         room = RestaurantRoom.objects.create(
             restaurant=restaurant,
             room_name=request.data['room_name'],
@@ -186,7 +181,6 @@ class RestaurantRoomActionViewSet(ViewSet):
         room_serialize = RoomSerializer(room, many=True).data
         return Response(data={"room_details": room_serialize}, status=status.HTTP_200_OK)
 
-    # Need to fix.
     def edit_room(self, request, pk):
         obj = RestaurantRoom.objects.filter(id=pk).first()
         serializer_room = RoomSerializer(obj, data=request.data, partial=True)
@@ -233,7 +227,6 @@ class RestaurantMenuActionsView(ViewSet):
         menu_serialize = MenuSerializer(menu, many=True).data
         return Response(data={"menu_details": menu_serialize}, status=status.HTTP_200_OK)
 
-    # Need to fix.
     def edit_menu(self, request, pk):
         obj = RestaurantMenu.objects.filter(id=pk).first()
         serializer_menu = MenuSerializer(obj, data=request.data, partial=True)
@@ -267,5 +260,5 @@ class CommentViewSet(ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def restaurant_rate_view(request):
-    pass
+# def restaurant_rate_view(request):
+#     pass
