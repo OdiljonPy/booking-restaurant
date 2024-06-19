@@ -3,7 +3,7 @@ from authentication.models import User
 
 
 class RestaurantCategory(models.Model):
-    category_name = models.CharField(max_length=100)  # pan-asian, europe, usa, arabic, turkish, family
+    name = models.CharField(max_length=100)  # pan-asian, europe, usa, arabic, turkish, family
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -12,11 +12,11 @@ class RestaurantCategory(models.Model):
 
 class Restaurant(models.Model):
     author = models.ForeignKey(User, models.SET_NULL, null=True)
-    restaurant_name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
     picture = models.ImageField(upload_to='images/restaurants/',
                                 default='images/restaurants/default_restaurant.jpg')  # default= need to add
     description = models.TextField()
-    service_fee = models.IntegerField()
+    service_fee = models.FloatField()
     balance = models.FloatField(default=0)
 
     booking_count_total = models.IntegerField(default=0)
@@ -37,7 +37,7 @@ class Restaurant(models.Model):
 
 
 class RoomType(models.Model):
-    room_type_name = models.CharField(max_length=100)  # luxe, family, primary,
+    name = models.CharField(max_length=100)  # luxe, family, primary,
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -48,7 +48,7 @@ class RoomType(models.Model):
 
 class RestaurantRoom(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
-    room_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
     description = models.TextField()
     pictures = models.ImageField(upload_to='images/restaurants/room_images/',
                                  default='images/restaurants/room_images/default_room.jpg')  # default= need to add
@@ -64,7 +64,7 @@ class RestaurantRoom(models.Model):
 
 
 class MenuType(models.Model):
-    type_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
