@@ -1,5 +1,4 @@
 # from django.contrib import admin
-# from django.contrib import admin
 # from .models import Department, Role, Manager, Employee, PerformanceReview, Project, Task, LeaveRequest
 #
 # @admin.register(Department)
