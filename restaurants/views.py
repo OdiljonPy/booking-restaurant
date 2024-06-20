@@ -15,11 +15,14 @@ from .permission import IsOwner
 
 class RestaurantFilterViewSet(ViewSet):
     permission_classes = [AllowAny]
-    def restaurant_filter_view(self, request, *args, **kwargs):
-        params = kwargs
-        restaurants = Restaurant.objects.filter(restaurant_name=params['pk'])
-        restaurants_serialize = RestaurantSerializer(restaurants, many=True).data
-        return Response(data={'Result': restaurants_serialize}, status=status.HTTP_200_OK)
+
+    def restaurant_filter_view(self, request):
+        params = request.GET.get('q')
+        if params is not None and len(params) >= 1:
+            obj = Restaurant.objects.filter(restaurant_name__icontains=params)
+            serializer = RestaurantSerializer(obj, many=True).data
+            return Response(data={'message': serializer}, status=status.HTTP_200_OK)
+        return Response(data={'error': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
 
     def show_restaurant(self, request):
         restaurant_info = Restaurant.objects.all()
@@ -37,6 +40,7 @@ class RestaurantCategoryViewSet(ViewSet):
         return Response({"message": "please add the category name", "status": status.HTTP_400_BAD_REQUEST})
 
     permission_classes = [AllowAny]
+
     def restaurant_category(self, request):
         category = RestaurantCategory.objects.all()
         category_serialize = CategorySerializer(category, many=True).data
@@ -48,9 +52,6 @@ class RestaurantCategoryActionViewSet(ViewSet):
         category = RestaurantCategory.objects.filter(pk=pk).first()
         category_serializer = CategorySerializer(category).data
         return Response(data={"category_details": category_serializer}, status=status.HTTP_200_OK)
-
-    def edit_category(self, request, pk):
-        pass
 
     def delete_category(self, request, pk):
         category = RestaurantCategory.objects.filter(pk=pk).first()
@@ -77,21 +78,22 @@ class RestaurantViewSet(ViewSet):
         restaurant_obj.save()
         return Response(data={'message': 'Restaurant successfully created'}, status=status.HTTP_201_CREATED)
 
+
 # done
 class ActionRestaurantViewSet(ViewSet):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+
     def show_restaurant_detail(self, request, pk):
         restaurant_detail = Restaurant.objects.filter(id=pk).first()
-        restaurant_serialize = RestaurantSerializer(restaurant_detail).data
+        restaurant_serialize = RestaurantSerializer(data=restaurant_detail).data
         return Response(data={"restaurant_detail": restaurant_serialize}, status=status.HTTP_200_OK)
 
-    # Need to fix.
     def edit_restaurant(self, request, pk):
         obj = Restaurant.objects.filter(id=pk).first()
         serializer = RestaurantSerializer(obj, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(data={"message": "Data was saved"}, status=status.HTTP_202_ACCEPTED)
+            return Response(data={"message": serializer.data}, status=status.HTTP_202_ACCEPTED)
         return Response(data={"message": "Data doesn't found"}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete_restaurant(self, request, pk):
@@ -105,6 +107,7 @@ class ActionRestaurantViewSet(ViewSet):
 
 class RoomTypeViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
+
     def add_room_type(self, request):
         room_type = RoomType.objects.create(room_type_name=request.data['room_type_name'])
         room_type.save()
@@ -118,13 +121,14 @@ class RoomTypeViewSet(ViewSet):
 
 class RoomTypeActionViewSet(ViewSet):
     permission_classes = [IsAuthenticated, IsOwner]
-    # Need to fix
+
     def edit_room_type(self, request, pk):
         obj = RoomType.objects.filter(id=pk).first()
-        serializer_type = RoomTypeSerializer(obj, data=request.data, partial=True).data
+        serializer_type = RoomTypeSerializer(obj, data=request.data, partial=True)
         if serializer_type.is_valid():
             serializer_type.save()
-
+            return Response(data={'message': serializer_type.data}, status=status.HTTP_202_ACCEPTED)
+        return Response(data={'message': 'Serializer is invalid'}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete_room_type(self, request, pk):
         room_type = RoomType.objects.filter(id=pk).first()
@@ -145,7 +149,6 @@ class RestaurantRoomViewSet(ViewSet):
     def add_room(self, request, pk):
         restaurant = Restaurant.objects.filter(id=pk).first(),
         room_type = RoomType.objects.filter(id=request.data['room_type_id']).first()
-        print(pk, restaurant, room_type)
         room = RestaurantRoom.objects.create(
             restaurant=restaurant,
             room_name=request.data['room_name'],
@@ -178,12 +181,13 @@ class RestaurantRoomActionViewSet(ViewSet):
         room_serialize = RoomSerializer(room, many=True).data
         return Response(data={"room_details": room_serialize}, status=status.HTTP_200_OK)
 
-    # Need to fix.
     def edit_room(self, request, pk):
         obj = RestaurantRoom.objects.filter(id=pk).first()
-        serializer_room = RoomSerializer(obj, data=request.data, partial=True).data
+        serializer_room = RoomSerializer(obj, data=request.data, partial=True)
         if serializer_room.is_valid():
             serializer_room.save()
+            return Response(data={'message': serializer_room.data}, status=status.HTTP_202_ACCEPTED)
+        return Response(data={'message': 'Serializer is invalid'}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete_room(self, request, pk):
         room = RestaurantRoom.objects.filter(id=pk).first()
@@ -196,6 +200,7 @@ class RestaurantRoomActionViewSet(ViewSet):
 
 class RestaurantMenuViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
+
     def show_restaurant_menu(self, request):
         menu = RestaurantMenu.objects.filter(restaurant_id=request.data['restaurant_id'])
         menu_serialize = MenuSerializer(menu, many=True).data
@@ -216,17 +221,19 @@ class RestaurantMenuViewSet(ViewSet):
 
 class RestaurantMenuActionsView(ViewSet):
     permission_classes = [IsAuthenticated, IsOwner]
+
     def show_menu_detail(self, request, pk):
         menu = RestaurantMenu.objects.filter(id=pk).first()
         menu_serialize = MenuSerializer(menu, many=True).data
         return Response(data={"menu_details": menu_serialize}, status=status.HTTP_200_OK)
 
-    # Need to fix.
     def edit_menu(self, request, pk):
         obj = RestaurantMenu.objects.filter(id=pk).first()
-        serializer_menu = MenuSerializer(obj, data=request.data, partial=True).data
+        serializer_menu = MenuSerializer(obj, data=request.data, partial=True)
         if serializer_menu.is_valid():
             serializer_menu.save()
+            return Response(data={'message': serializer_menu.data}, status=status.HTTP_202_ACCEPTED)
+        return Response(data={'message': 'Serializer is invalid'})
 
     def delete_menu(self, request, pk):
         menu = RestaurantMenu.objects.filter(id=pk).first()
@@ -253,5 +260,5 @@ class CommentViewSet(ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def restaurant_rate_view(request):
-    pass
+# def restaurant_rate_view(request):
+#     pass
