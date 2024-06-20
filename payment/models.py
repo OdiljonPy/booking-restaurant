@@ -8,10 +8,10 @@ from restaurants.models import Restaurant
 
 
 class Cards(models.Model) :
-    pan = models.IntegerField(default=0, validators=[is_valid_pan])
-    expire_month = models.IntegerField(default=0, validators=[is_valid_month])
-    expire_year = models.IntegerField(default=0, validators=[is_valid_year])
-    phone_number = models.IntegerField(validators=[is_valid_uzbek_number])
+    pan = models.CharField(max_length=16, default=0, validators=[is_valid_pan])
+    expire_month = models.CharField(max_length=2, default=0, validators=[is_valid_month])
+    expire_year = models.CharField(max_length=4, default=0, validators=[is_valid_year])
+    phone_number = models.CharField(max_length=13, validators=[is_valid_uzbek_number])
     card_holder = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.UUIDField(default=uuid.uuid4, editable=False)
     balance = models.FloatField(default=0)
@@ -26,7 +26,7 @@ class Cards(models.Model) :
 class OTP(models.Model):
     otp_key = models.UUIDField(default=uuid.uuid4)
     otp_code = models.IntegerField(default=generate_otp_code)
-    phone_number = models.IntegerField(validators=[is_valid_uzbek_number])
+    phone_number = models.CharField(max_length=13, validators=[is_valid_uzbek_number])
     expire_date = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
