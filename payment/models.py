@@ -10,7 +10,7 @@ from restaurants.models import Restaurant
 class Cards(models.Model) :
     pan = models.CharField(max_length=16, default=0, validators=[is_valid_pan])
     expire_month = models.CharField(max_length=2, default=0, validators=[is_valid_month])
-    expire_year = models.CharField(max_length=4, default=0, validators=[is_valid_year])
+    expire_year = models.IntegerField(default=0, validators=[is_valid_year])
     phone_number = models.CharField(max_length=13, validators=[is_valid_uzbek_number])
     card_holder = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.UUIDField(default=uuid.uuid4, editable=False)
@@ -20,7 +20,7 @@ class Cards(models.Model) :
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.card_holder
+        return self.pan
 
 
 class OTP(models.Model):
@@ -49,3 +49,6 @@ class PaymentWithHistory(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return str(self.card.pan)

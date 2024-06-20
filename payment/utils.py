@@ -35,12 +35,15 @@ def is_valid_month(month):
         return False
 
 
-def is_valid_year(year):
-    pattern = r'^(202)\d{1}$'
-    if re.match(pattern, year):
-        return True
-    else:
-        return False
+# def is_valid_year(year):
+#     pattern = r'^(202)\d{1}$'
+#     if re.match(pattern, year):
+#         return True
+#     else:
+#         return False
+
+def is_valid_year(num):
+    return 24 <= num <= 30
 
 
 def is_valid_uzbek_number(phone_number):
