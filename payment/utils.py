@@ -1,6 +1,8 @@
 import random
 import requests
 from config.settings import TELEGRAM_API_URL, BOT_TOKEN, CHANNEL_ID
+import re
+
 
 # TELEGRAM_API_URL = 'https://api.telegram.org/bot{}/sendMessage?text={}&chat_id={}'
 # BOT_TOKEN = '6912718237:AAH2v2r4x2TuYnHqfpbi1ci43AxYKEiBWoE'
@@ -17,38 +19,37 @@ def send_otp(otp):
     requests.get(TELEGRAM_API_URL.format(BOT_TOKEN, message, CHANNEL_ID))
 
 
-def uzb_number(number):
-    # number = args['number']
-    if (len(number) == 13 and number[0] == '+' and number[1:].isnumeric() and number[1] == 9 and number[2] == 9 and
-            number[3] == 8 or len(number) == 12 and number.isnumeric() and number[0] == 9 and number[1] == 9 and
-            number[2] == 8):
-        return {'message': number}
-    return {'message': 'Your number is not uzbek number'}
+def is_valid_pan(pan):
+    pattern = r'^(8600|9860)\d{12}$'
+    if re.match(pattern, pan):
+        return True
+    else:
+        return False
 
 
-def pan_number(pan):
-    # pan = args['pan']
-    try:
-        pan = int(pan)
-    except Exception:
-        return {'message': 'Your pan is invalid'}
-    if len(pan) == 16:
-        return {'message': pan}
+def is_valid_month(month):
+    pattern = r'^(0[1-9]|1[0-2])$'
+    if re.match(pattern, month):
+        return True
+    else:
+        return False
 
 
-def month_valid(month):
-    # month = args['month']
-    if len(month) == 2 and ((month[0] == 0 and month[1] <= 2) or month <= 12):
-        return {'message': month}
-    return {'message': 'Month is invalid'}
+# def is_valid_year(year):
+#     pattern = r'^(202)\d{1}$'
+#     if re.match(pattern, year):
+#         return True
+#     else:
+#         return False
+
+def is_valid_year(num):
+    return 24 <= num <= 30
 
 
-def year_valid(year):
-    # year = args['year']
-    try:
-        year = int(year)
-    except Exception:
-        return {'message': 'Year is invalid'}
-    if year.isnumeric() and year >= 24 and year <= 30:
-        return {'message': year}
+def is_valid_uzbek_number(phone_number):
+    pattern = r'^(?:\+998|998)\d{9}$'
 
+    if re.match(pattern, phone_number):
+        return True
+    else:
+        return False
