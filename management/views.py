@@ -10,8 +10,8 @@ from payment.models import PaymentWithHistory
 
 
 class RestaurantViewSet(viewsets.ViewSet):
-    queryset = Restaurant.objects.all()
-    serializer_class = RestaurantSerializer
+    # queryset = Restaurant.objects.all()
+    # serializer_class = RestaurantSerializer
 
     def list(self, request):
         queryset = Restaurant.objects.all()
@@ -26,7 +26,7 @@ class RestaurantViewSet(viewsets.ViewSet):
         serializer = RestaurantSerializer(restaurant)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['get'], url_path='bookings')
+    # @action(detail=True, methods=['get'], url_path='bookings')
     def booking(self, request, pk=None):
         booking_id = request.query_params.get('booking_id')
         date = request.query_params.get('date')
@@ -45,7 +45,7 @@ class RestaurantViewSet(viewsets.ViewSet):
         serializer = BookingSerializer(bookings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['delete'], url_path='cancel-booking')
+    # @action(detail=True, methods=['delete'], url_path='cancel-booking')
     def cancel_booking(self, request, pk=None):
         booking_id = request.query_params.get('booking_id')
 
@@ -58,33 +58,35 @@ class RestaurantViewSet(viewsets.ViewSet):
         booking = Booking.objects.get(pk=booking_id, restaurants_id=pk)
         booking.status = False
         booking.save()
-        return Response({'status': 'Booking cancelled'}, status=status.HTTP_200_OK)
+        return Response({'status': 'Booking cancelled'}, status=status.HTTP_404_NOT_FOUND)
 
-    @action(detail=True, methods=['get'], url_path='payment-balance')
+    # @action(detail=True, methods=['get'], url_path='payment-balance')
     def payment_balance(self, request, pk=None):
         payments = PaymentWithHistory.objects.filter(restaurants_id=pk)
         balance = payments.aggregate(total=Sum('amount')) or {'total': 0}
         balance['total'] = balance.get('total', 0)
         return Response(balance, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['get'], url_path='statistics')
+    # @action(detail=True, methods=['get'], url_path='statistics')
     def statistics(self, request, pk=None):
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
-
-        if not start_date or not parse_date(start_date):
+        parsed_start_date = parse_date(start_date)
+        parsed_end_date = parse_date(end_date)
+        if not start_date or not parsed_start_date:
             return Response({'error': 'Invalid start date format'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not end_date or not parse_date(end_date):
+        if not end_date or not parsed_end_date:
             return Response({'error': 'Invalid end date format'}, status=status.HTTP_400_BAD_REQUEST)
 
         if parse_date(start_date) > parse_date(end_date):
             return Response({'error': 'Start date cannot be after end date'}, status=status.HTTP_400_BAD_REQUEST)
 
-        bookings = Booking.objects.filter(restaurants_id=pk, booked_time__date__range=[start_date, end_date])
+        bookings = Booking.objects.filter(restaurants_id=pk,
+                                          booked_time__date__range=[parsed_start_date, parsed_end_date])
         total_bookings = bookings.count()
         total_revenue = PaymentWithHistory.objects.filter(
-            restaurants_id=pk, booked_time__date__range=[start_date, end_date]
+            restaurants_id=pk, created_at__date__range=[parsed_start_date, parsed_end_date]
         ).aggregate(total=Sum('amount'))['total'] or 0
 
         stats = {
