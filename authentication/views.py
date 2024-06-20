@@ -1,17 +1,15 @@
 from datetime import timedelta, datetime
 
 from django.contrib.auth import update_session_auth_hash
-from rest_framework import status, viewsets, request, generics
+from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+
 from rest_framework.response import Response
-from rest_framework.viewsets import ViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.hashers import check_password
 from authentication.models import User, OTP
 from rest_framework.permissions import IsAuthenticated
-from .serializers import UserSerializer, OTPSerializer, ChangePasswordSerializer
+from .serializers import UserSerializer, ChangePasswordSerializer
 from .utils import send_otp, generate_otp_code
 
 
@@ -88,28 +86,3 @@ class OtpViewSet(viewsets.ViewSet):
                     return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
                 return Response({'error': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# class ChangeViewSet(viewsets.ViewSet):    # @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def change_password(self, request):
-#     if request.method == 'POST':
-#         serializer = ChangePasswordSerializer(data=request.data)
-#         if serializer.is_valid():
-#             user = request.user
-#             if user.check_password(serializer.data.get('old_password')):
-#                 user.set_password(serializer.data.get('new_password'))
-#                 user.save()
-#                 update_session_auth_hash(request, user)  # To update session after password change
-#                 return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
-#             return Response({'error': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# @permission_classes([IsAuthenticated])
-# def change(self, request):
-# user = User.objects.filter(username=data['username'])
-# print(user)
-# if check_password(data['old_password'], user.password) is False:
-#     return Response(data={"error": "passwords are not same!"}, status=status.HTTP_400_BAD_REQUEST)
-# user.password = make_password(data['new_password'])
-# user.save(update_fields=['password'])
-# return Response(data={"message": "successfully changed."}, status=status.HTTP_200_OK)
