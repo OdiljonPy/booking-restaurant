@@ -1,5 +1,5 @@
 from django.db import models
-from authentication.models import User
+# from authentication.models import User
 
 
 class RestaurantCategory(models.Model):
@@ -11,7 +11,7 @@ class RestaurantCategory(models.Model):
 
 
 class Restaurant(models.Model):
-    author = models.ForeignKey(User, models.SET_NULL, null=True)
+    # author = models.ForeignKey(User, models.SET_NULL, null=True)
     restaurant_name = models.CharField(max_length=255)
     picture = models.ImageField(upload_to='images/restaurants/',
                                 default='images/restaurants/default_restaurant.jpg')  # default= need to add
@@ -91,7 +91,7 @@ class RestaurantMenu(models.Model):
 
 
 class Comment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    # user = models.ForeignKey(User, on_delete=models.CASCADE)
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     menu = models.ForeignKey(RestaurantMenu, on_delete=models.CASCADE)
     comment = models.TextField()

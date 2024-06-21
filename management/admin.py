@@ -1,11 +1,8 @@
 from django.contrib import admin
-from .models import Department, Role, Manager, Employee, PerformanceReview, Project, Task, LeaveRequest
+from .models import  Role, Manager, Employee, PerformanceReview, Project, Task, LeaveRequest
 
 
-@admin.register(Department)
-class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description')
-    search_fields = ('name',)
+
 
 
 @admin.register(Role)

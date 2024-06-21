@@ -1,39 +1,46 @@
-from django.contrib.auth import get_user_model
 from django.db import models
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-
-class Department(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-
-    def str(self):
-        return self.name
 
 
 class Role(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return self.name
+
 
 class Manager(models.Model):
     user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE)
-    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
     title = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
     hire_date = models.DateField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.user
 
 
 class Employee(models.Model):
-    user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE)
+    user = models.OneToOneField(get_user_model, on_delete=models.CASCADE)
     manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True, related_name='employees')
-    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
     title = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
     hire_date = models.DateField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.user
+
 
 
 class PerformanceReview(models.Model):
@@ -42,15 +49,25 @@ class PerformanceReview(models.Model):
     review_date = models.DateField(default=timezone.now)
     comments = models.TextField()
     rating = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.employee
+
 
 
 class Project(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
-    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     managers = models.ManyToManyField(Manager, related_name='projects')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
 
 
 class Task(models.Model):
@@ -60,7 +77,10 @@ class Task(models.Model):
     assigned_to = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)
     completed = models.BooleanField(default=False)
-
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return self.project
 
 class LeaveRequest(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_requests')
@@ -68,3 +88,8 @@ class LeaveRequest(models.Model):
     end_date = models.DateField()
     reason = models.TextField()
     approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.employee

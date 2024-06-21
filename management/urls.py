@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RestaurantViewSet
+from .views import RestaurantViewSet, ManagementViewSet,EmployerViewset
 
 urlpatterns = [
     path('restaurants/', RestaurantViewSet.as_view({
@@ -25,4 +25,6 @@ urlpatterns = [
     path('restaurants/<int:pk>/statistics/', RestaurantViewSet.as_view({
         'get': 'statistics',
     }), name='restaurant-statistics'),
+    path('resturant/manager/', ManagementViewSet.as_view({'get': 'show_mangers', 'post': 'create_manager'})),
+    path('resturant/employer/', EmployerViewset.as_view({'get': 'show_employer', 'post': 'create_employer'})),
 ]
