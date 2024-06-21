@@ -7,7 +7,7 @@ from authentication.models import User
 from restaurants.models import Restaurant
 
 
-class Cards(models.Model) :
+class Card(models.Model):
     pan = models.CharField(max_length=16, default=0, validators=[is_valid_pan])
     expire_month = models.CharField(max_length=2, default=0, validators=[is_valid_month])
     expire_year = models.IntegerField(default=0, validators=[is_valid_year])
@@ -43,7 +43,7 @@ class OTP(models.Model):
 
 class PaymentWithHistory(models.Model):
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE)
-    card = models.ForeignKey(Cards, on_delete=models.CASCADE)
+    card = models.ForeignKey(Card, on_delete=models.CASCADE)
     restaurants = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     order_price = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='order_price')
 
