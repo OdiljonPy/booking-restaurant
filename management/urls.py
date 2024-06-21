@@ -1,28 +1,28 @@
 from django.urls import path
-from .views import RestaurantViewSet
+from .views import RestaurantViewSet, BookingViewSet
 
 urlpatterns = [
     path('restaurants/', RestaurantViewSet.as_view({
         'get': 'list',
     }), name='restaurant-list'),
 
-    path('restaurants/<int:pk>/', RestaurantViewSet.as_view({
+    path('restaurants/<int:rest_id>/', RestaurantViewSet.as_view({
         'get': 'retrieve',
     }), name='restaurant-detail'),
 
-    path('restaurants/<int:pk>/bookings/', RestaurantViewSet.as_view({
-        'get': 'booking',
-    }), name='restaurant-bookings'),
-
-    path('restaurants/<int:pk>/cancel-booking/', RestaurantViewSet.as_view({
-        'delete': 'cancel_booking',
-    }), name='restaurant-cancel-booking'),
-
-    path('restaurants/<int:pk>/payment-balance/', RestaurantViewSet.as_view({
-        'get': 'payment_balance',
+    path('restaurants/<int:rest_id>/balance/', RestaurantViewSet.as_view({
+        'get': 'balance',
     }), name='restaurant-payment-balance'),
 
-    path('restaurants/<int:pk>/statistics/', RestaurantViewSet.as_view({
+    path('restaurants/<int:rest_id>/statistics/', RestaurantViewSet.as_view({
         'get': 'statistics',
     }), name='restaurant-statistics'),
+    path('restaurants/<int:rest_id>/bookings/', BookingViewSet.as_view({
+        'get': 'list',
+    }), name='restaurant-bookings'),
+
+    path('restaurants/<int:rest_id>/bookings/<int:booking_id>/', BookingViewSet.as_view({
+        'get': 'retrieve', 'post': 'cancel',
+    }), name='restaurant-bookings'),
+
 ]

@@ -1,3 +1,4 @@
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -7,68 +8,52 @@ from restaurants.models import Restaurant
 from booking.models import Booking
 from .serializers import RestaurantSerializer, BookingSerializer
 from payment.models import PaymentWithHistory
+from rest_framework.permissions import IsAuthenticated
+
+'''
+swager yozish
+permissions
+'''
 
 
 class RestaurantViewSet(viewsets.ViewSet):
-    # queryset = Restaurant.objects.all()
-    # serializer_class = RestaurantSerializer
+    permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Retrieve a list of all restaurants",
+        responses={status.HTTP_200_OK: RestaurantSerializer(many=True)}
+    )
     def list(self, request):
-        queryset = Restaurant.objects.all()
-        serializer = RestaurantSerializer(queryset, many=True)
+        restaurants = Restaurant.objects.all()
+        serializer = RestaurantSerializer(restaurants, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def retrieve(self, request, pk=None):
-        if not Restaurant.objects.filter(pk=pk).exists():
+    @swagger_auto_schema(
+        operation_description="Retrieve a restaurant based on id",
+        responses={status.HTTP_200_OK: RestaurantSerializer(many=False)}
+    )
+    def retrieve(self, request, rest_id):
+        exists = Restaurant.objects.filter(pk=rest_id)
+        if not exists.exists():
             return Response({'error': 'Restaurant not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        restaurant = Restaurant.objects.get(pk=pk)
-        serializer = RestaurantSerializer(restaurant)
+        serializer = RestaurantSerializer(exists.first())
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # @action(detail=True, methods=['get'], url_path='bookings')
-    def booking(self, request, pk=None):
-        booking_id = request.query_params.get('booking_id')
-        date = request.query_params.get('date')
-
-        if booking_id and not booking_id.isdigit():
-            return Response({'error': 'Invalid booking ID'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if date and not parse_date(date):
-            return Response({'error': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
-
-        bookings = Booking.objects.filter(restaurants_id=pk)
-        if booking_id:
-            bookings = bookings.filter(pk=booking_id)
-        if date:
-            bookings = Booking.objects.filter(booked_time__date=date)
-        serializer = BookingSerializer(bookings, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    # @action(detail=True, methods=['delete'], url_path='cancel-booking')
-    def cancel_booking(self, request, pk=None):
-        booking_id = request.query_params.get('booking_id')
-
-        if not booking_id or not booking_id.isdigit():
-            return Response({'error': 'Invalid booking ID'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not Booking.objects.filter(pk=booking_id, restaurants_id=pk).exists():
-            return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        booking = Booking.objects.get(pk=booking_id, restaurants_id=pk)
-        booking.status = False
-        booking.save()
-        return Response({'status': 'Booking cancelled'}, status=status.HTTP_404_NOT_FOUND)
-
-    # @action(detail=True, methods=['get'], url_path='payment-balance')
-    def payment_balance(self, request, pk=None):
-        payments = PaymentWithHistory.objects.filter(restaurants_id=pk)
+    @swagger_auto_schema(
+        operation_description="Show total amount of payments to the provided restaurant",
+        responses={status.HTTP_200_OK: RestaurantSerializer(many=False)}
+    )
+    def balance(self, request, rest_id=None):
+        payments = PaymentWithHistory.objects.filter(restaurants_id=rest_id)
         balance = payments.aggregate(total=Sum('amount')) or {'total': 0}
         balance['total'] = balance.get('total', 0)
         return Response(balance, status=status.HTTP_200_OK)
 
-    # @action(detail=True, methods=['get'], url_path='statistics')
-    def statistics(self, request, pk=None):
+    @swagger_auto_schema(
+        operation_description="Show the full statistics of the restaurant from the start to the end dates",
+        responses={status.HTTP_200_OK: RestaurantSerializer(many=False)}
+    )
+    def statistics(self, request, rest_id):
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         parsed_start_date = parse_date(start_date)
@@ -82,11 +67,11 @@ class RestaurantViewSet(viewsets.ViewSet):
         if parse_date(start_date) > parse_date(end_date):
             return Response({'error': 'Start date cannot be after end date'}, status=status.HTTP_400_BAD_REQUEST)
 
-        bookings = Booking.objects.filter(restaurants_id=pk,
+        bookings = Booking.objects.filter(restaurants_id=rest_id,
                                           booked_time__date__range=[parsed_start_date, parsed_end_date])
         total_bookings = bookings.count()
         total_revenue = PaymentWithHistory.objects.filter(
-            restaurants_id=pk, created_at__date__range=[parsed_start_date, parsed_end_date]
+            restaurants_id=rest_id, created_at__date__range=[parsed_start_date, parsed_end_date]
         ).aggregate(total=Sum('amount'))['total'] or 0
 
         stats = {
@@ -94,3 +79,40 @@ class RestaurantViewSet(viewsets.ViewSet):
             'total_revenue': total_revenue,
         }
         return Response(stats, status=status.HTTP_200_OK)
+
+
+class BookingViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+    @swagger_auto_schema(
+        operation_description="Retrieve info about current booking based on booking_id or date",
+        responses={status.HTTP_200_OK: RestaurantSerializer(many=False)}
+    )
+    def list(self, request, rest_id):
+        bookings = Booking.objects.filter(restaurants_id=rest_id)
+        serializer = BookingSerializer(bookings, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, rest_id, booking_id):
+        date = request.query_params.get('date')
+        booking_exists = Booking.objects.filter(pk=booking_id, restaurants_id=rest_id)
+        if not booking_exists.exists():
+            return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
+        bookings = booking_exists
+        if date and not parse_date(date):
+            return Response({'error': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
+        if date:
+            bookings = Booking.objects.filter(booked_time__date=date)
+        serializer = BookingSerializer(bookings, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_description="Cancel the booking",
+        responses={status.HTTP_200_OK: RestaurantSerializer(many=False)}
+    )
+    def cancel(self, request, rest_id, booking_id):
+        booking_exists = Booking.objects.filter(pk=booking_id, restaurants_id=rest_id).first()
+        if booking_exists is None:
+            return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
+        booking_exists.status = False
+        booking_exists.save(update_fields=['status'])
+        return Response({'status': 'Booking cancelled'}, status=status.HTTP_404_NOT_FOUND)
