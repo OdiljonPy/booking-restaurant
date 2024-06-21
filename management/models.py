@@ -1,5 +1,6 @@
 from django.db import models
-from django.contrib.auth import get_user_model
+
+from authentication.models import User
 from django.utils import timezone
 
 
@@ -15,7 +16,7 @@ class Role(models.Model):
 
 
 class Manager(models.Model):
-    user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
@@ -28,7 +29,7 @@ class Manager(models.Model):
 
 
 class Employee(models.Model):
-    user = models.OneToOneField(get_user_model, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True, related_name='employees')
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
     title = models.CharField(max_length=100)

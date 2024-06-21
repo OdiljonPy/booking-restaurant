@@ -6,7 +6,8 @@ from django.db.models import Sum
 from django.utils.dateparse import parse_date
 from restaurants.models import Restaurant
 from booking.models import Booking
-from .serializers import RestaurantSerializer, BookingSerializer
+from .models import Role, Manager, Employee, PerformanceReview, Project, Task, LeaveRequest
+from .serializers import RestaurantSerializer, BookingSerializer, ManagerSerializer, EmployeeSerializer
 from payment.models import PaymentWithHistory
 from rest_framework.permissions import IsAuthenticated
 
@@ -83,6 +84,7 @@ class RestaurantViewSet(viewsets.ViewSet):
 
 class BookingViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
+
     @swagger_auto_schema(
         operation_description="Retrieve info about current booking based on booking_id or date",
         responses={status.HTTP_200_OK: RestaurantSerializer(many=False)}
@@ -116,3 +118,35 @@ class BookingViewSet(viewsets.ViewSet):
         booking_exists.status = False
         booking_exists.save(update_fields=['status'])
         return Response({'status': 'Booking cancelled'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class ManagementViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        manager_serializer = ManagerSerializer(data=request.data)
+        if manager_serializer.is_valid():
+            manager_serializer.save()
+            return Response({"message": "Manager Added Successfully", "status": status.HTTP_201_CREATED})
+        return Response({"message": "please fill the details", "status": status.HTTP_400_BAD_REQUEST})
+
+    def list(self, request):
+        managers = Manager.objects.all()
+        serializer = ManagerSerializer(managers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class EmployerViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        employer_serializer = EmployeeSerializer(data=request.data)
+        if employer_serializer.is_valid():
+            employer_serializer.save()
+            return Response({"message": "Employee Added Successfully", "status": status.HTTP_201_CREATED})
+        return Response({"message": "please fill the details", "status": status.HTTP_400_BAD_REQUEST})
+
+    def list(self, request):
+        employers = Employee.objects.all()
+        serializer = EmployeeSerializer(employers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

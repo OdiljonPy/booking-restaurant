@@ -13,14 +13,14 @@ class RoleAdmin(admin.ModelAdmin):
 
 @admin.register(Manager)
 class ManagerAdmin(admin.ModelAdmin):
-    list_display = ('user', 'department', 'title', 'phone_number', 'hire_date')
-    list_filter = ('department', 'hire_date')
+    list_display = ('user', 'title', 'phone_number', 'hire_date')
+    list_filter = ['hire_date']
 
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
-    list_display = ('user', 'manager', 'department', 'role', 'title', 'phone_number', 'hire_date')
-    list_filter = ('department', 'role', 'hire_date')
+    list_display = ('user', 'manager', 'role', 'title', 'phone_number', 'hire_date')
+    list_filter = ('role', 'hire_date')
 
 
 @admin.register(PerformanceReview)
@@ -32,9 +32,9 @@ class PerformanceReviewAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('name', 'department', 'start_date', 'end_date')
+    list_display = ('name',  'start_date', 'end_date')
 
-    list_filter = ('department', 'start_date', 'end_date')
+    list_filter = ('start_date', 'end_date')
 
 
 @admin.register(Task)
