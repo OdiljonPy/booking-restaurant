@@ -11,11 +11,6 @@ from .serializers import RestaurantSerializer, BookingSerializer, ManagerSeriali
 from payment.models import PaymentWithHistory
 from rest_framework.permissions import IsAuthenticated
 
-'''
-swager yozish
-permissions
-'''
-
 
 class RestaurantViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]

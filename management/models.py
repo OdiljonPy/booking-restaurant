@@ -4,13 +4,13 @@ from authentication.models import User
 from django.utils import timezone
 
 
-
 class Role(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
     def __str__(self):
         return self.name
 
@@ -43,7 +43,6 @@ class Employee(models.Model):
         return self.user
 
 
-
 class PerformanceReview(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='reviews')
     reviewer = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True)
@@ -55,7 +54,6 @@ class PerformanceReview(models.Model):
 
     def __str__(self):
         return self.employee
-
 
 
 class Project(models.Model):
@@ -80,8 +78,10 @@ class Task(models.Model):
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
     def __str__(self):
         return self.project
+
 
 class LeaveRequest(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_requests')

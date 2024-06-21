@@ -1,8 +1,5 @@
 from django.contrib import admin
-from .models import  Role, Manager, Employee, PerformanceReview, Project, Task, LeaveRequest
-
-
-
+from .models import Role, Manager, Employee, PerformanceReview, Project, Task, LeaveRequest
 
 
 @admin.register(Role)
@@ -32,7 +29,7 @@ class PerformanceReviewAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('name',  'start_date', 'end_date')
+    list_display = ('name', 'start_date', 'end_date')
 
     list_filter = ('start_date', 'end_date')
 
