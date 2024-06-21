@@ -131,6 +131,11 @@ class ManagementViewSet(viewsets.ViewSet):
         if manager_serializer.is_valid():
             manager_serializer.save()
             return Response({"message": "Manager Added Successfully", "status": status.HTTP_201_CREATED})
+        if Manager.objects.count() >= 3:
+            return Response({"error": "Managerlar soni maksimal 3 ta bo'lishi mumkin"},
+                            status=status.HTTP_403_FORBIDDEN)
+
+
         return Response({"message": "please fill the details", "status": status.HTTP_400_BAD_REQUEST})
 
     @swagger_auto_schema(
