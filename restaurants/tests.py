@@ -1,30 +1,16 @@
-d = {
-    'pk': 1,
-    'name': 'hh',
-    'phone': 998901234567,
-    'address': 'Novza'
-}
+from django.db import models
+class OrderItems(models.Model):
+    menu = models.IntegerField(default=0)
+    amount = models.IntegerField(default=0)
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-#
-# d2 = {}
-#
-#
-# def change(*args, **kwargs):
-#     for key in kwargs.keys():
-#         for value in args:
-#             print(key, value)
-#
-#
-# for key, value in d.items():
-#     change(key, value)
-#     # print(key)
-def table_things(**kwargs):
-    print(kwargs['name'])
-    for name, value in kwargs.items():
-        print(name, '=', value)
+    def calculate_total_price(self):
+        return self.menu * self.amount
 
+    def __str__(self):
+        return self.menu.name
 
-
-table_things(name="hello", pk=2)
+OrderItems.calculate_total_price()
 
