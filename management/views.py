@@ -86,7 +86,7 @@ class BookingViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
-        operation_description="Retrieve info about current booking based on booking_id or date",
+        operation_description="List all bookings of the restaurant",
         responses={status.HTTP_200_OK: RestaurantSerializer(many=False)}
     )
     def list(self, request, rest_id):
@@ -94,6 +94,10 @@ class BookingViewSet(viewsets.ViewSet):
         serializer = BookingSerializer(bookings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        operation_description="Retrieve info about current booking based on booking_id or date",
+        responses={status.HTTP_200_OK: RestaurantSerializer(many=False)}
+    )
     def retrieve(self, request, rest_id, booking_id):
         date = request.query_params.get('date')
         booking_exists = Booking.objects.filter(pk=booking_id, restaurants_id=rest_id)
@@ -109,7 +113,7 @@ class BookingViewSet(viewsets.ViewSet):
 
     @swagger_auto_schema(
         operation_description="Cancel the booking",
-        responses={status.HTTP_200_OK: RestaurantSerializer(many=False)}
+        responses={status.HTTP_404_NOT_FOUND: RestaurantSerializer(many=False)}
     )
     def cancel(self, request, rest_id, booking_id):
         booking_exists = Booking.objects.filter(pk=booking_id, restaurants_id=rest_id).first()
@@ -123,6 +127,10 @@ class BookingViewSet(viewsets.ViewSet):
 class ManagementViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Create a new manager for the restaurant",
+        responses={status.HTTP_201_CREATED: RestaurantSerializer(many=False)}
+    )
     def create(self, request, *args, **kwargs):
         manager_serializer = ManagerSerializer(data=request.data)
         if manager_serializer.is_valid():
@@ -130,6 +138,10 @@ class ManagementViewSet(viewsets.ViewSet):
             return Response({"message": "Manager Added Successfully", "status": status.HTTP_201_CREATED})
         return Response({"message": "please fill the details", "status": status.HTTP_400_BAD_REQUEST})
 
+    @swagger_auto_schema(
+        operation_description="List the restaurants managers",
+        responses={status.HTTP_200_OK: RestaurantSerializer(many=False)}
+    )
     def list(self, request):
         managers = Manager.objects.all()
         serializer = ManagerSerializer(managers, many=True)
@@ -139,6 +151,10 @@ class ManagementViewSet(viewsets.ViewSet):
 class EmployerViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Create a new employee",
+        responses={status.HTTP_201_CREATED: RestaurantSerializer(many=False)}
+    )
     def create(self, request, *args, **kwargs):
         employer_serializer = EmployeeSerializer(data=request.data)
         if employer_serializer.is_valid():
@@ -146,7 +162,11 @@ class EmployerViewSet(viewsets.ViewSet):
             return Response({"message": "Employee Added Successfully", "status": status.HTTP_201_CREATED})
         return Response({"message": "please fill the details", "status": status.HTTP_400_BAD_REQUEST})
 
+    @swagger_auto_schema(
+        operation_description="List the employees of the manager",
+        responses={status.HTTP_200_OK: RestaurantSerializer(many=False)}
+    )
     def list(self, request):
-        employers = Employee.objects.all()
-        serializer = EmployeeSerializer(employers, many=True)
+        employees = Employee.objects.all()
+        serializer = EmployeeSerializer(employees, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
