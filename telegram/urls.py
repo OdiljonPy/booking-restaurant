@@ -2,7 +2,7 @@ from django.urls import path
 from .views import TelegramUserViewSet, RestaurantViewSet, RoomsViewSet, RestMenuViewSet
 
 urlpatterns = [
-    path('user/add/', TelegramUserViewSet.as_view({'post': 'create'})),
+    path('user/create/', TelegramUserViewSet.as_view({'post': 'create'})),
 
     path('rest/all/', RestaurantViewSet.as_view({'get': 'all_restaurant'})),
     path('rest/categories/', RestaurantViewSet.as_view({'get': 'category_restaurant'})),
