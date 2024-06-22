@@ -23,6 +23,9 @@ class OTP(models.Model):
     otp_code = models.IntegerField(default=generate_otp_code)
     otp_key = models.UUIDField(default=uuid.uuid4)
 
+    otp_token = models.UUIDField(default=uuid.uuid4())
+    attempts = models.IntegerField(default=0)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
