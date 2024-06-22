@@ -7,7 +7,7 @@ class RestaurantCategory(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.category_name
+        return self.name
 
 
 class Restaurant(models.Model):
@@ -33,7 +33,7 @@ class Restaurant(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.restaurant_name
+        return self.name
 
 
 class RoomType(models.Model):
@@ -43,7 +43,7 @@ class RoomType(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.room_type_name
+        return self.name
 
 
 class RestaurantRoom(models.Model):
@@ -60,7 +60,7 @@ class RestaurantRoom(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.room_name
+        return self.name
 
 
 class MenuType(models.Model):
@@ -70,7 +70,7 @@ class MenuType(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.type_name
+        return self.name
 
 
 class RestaurantMenu(models.Model):
