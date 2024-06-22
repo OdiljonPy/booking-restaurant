@@ -51,7 +51,6 @@ urlpatterns = [
     path('api/v1/token/refresh/', TokenRefreshView.as_view()),
     path('api/v1/token/verify/', TokenVerifyView.as_view()),
     path('api/v1/restaurant/', include("restaurants.urls")),
-    path('api/v1/management/', include("management.urls")),
 
     re_path(r'static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
     re_path(r'media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
