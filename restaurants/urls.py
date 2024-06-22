@@ -20,16 +20,16 @@ urlpatterns = [
     path('room-type/actions/<int:pk>/',
          RoomTypeActionViewSet.as_view({'patch': 'edit_room_type', 'delete': 'delete_room_type'})),
 
-    path('rooms/<int:pk>/', RestaurantRoomViewSet.as_view({'get': 'show_restaurant_room', 'post': 'add_room'})),
-    path('rooms/actions/<int:pk>/', RestaurantRoomActionViewSet.as_view({'get': 'show_room_detail',
-                                                                         'patch': 'edit_room',
-                                                                         'delete': 'delete_room'})),
+    path('<int:pk>/room/', RestaurantRoomViewSet.as_view({'get': 'show_restaurant_room', 'post': 'add_room'})),
+    path('actions/<int:pk>/room/', RestaurantRoomActionViewSet.as_view({'get': 'show_room_detail',
+                                                                        'patch': 'edit_room',
+                                                                        'delete': 'delete_room'})),
 
     path('menu/', RestaurantMenuViewSet.as_view({'get': 'show_restaurant_menu', 'post': 'add_restaurant_menu'})),
-    path('menu/actions/<int:pk>',
+    path('actions/<int:pk>/menu/',
          RestaurantMenuActionsView.as_view({'get': 'show_menu_detail', 'patch': 'edit_menu', 'delete': 'delete_menu'})),
 
     path('comment/', CommentViewSet.as_view({'post': 'create'})),
-    path('restaurants/<int:restaurant_id>/comments/', CommentViewSet.as_view({'get': 'list'})),
+    path('<int:restaurant_id>/comments/', CommentViewSet.as_view({'get': 'list'})),
 
 ]

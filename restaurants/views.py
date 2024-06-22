@@ -10,6 +10,8 @@ from .serializers import (CategorySerializer, RestaurantSerializer,
                           RoomSerializer, RoomTypeSerializer, MenuSerializer, CommentSerializer)
 from .permission import IsOwner
 
+from difflib import SequenceMatcher
+
 
 # RESTAURANT SECTION
 
@@ -17,12 +19,18 @@ class RestaurantFilterViewSet(ViewSet):
     permission_classes = [AllowAny]
 
     def restaurant_filter_view(self, request):
-        params = request.GET.get('q')
-        if params is not None and len(params) >= 1:
-            obj = Restaurant.objects.filter(restaurant_name__icontains=params)
-            serializer = RestaurantSerializer(obj, many=True).data
-            return Response(data={'message': serializer}, status=status.HTTP_200_OK)
-        return Response(data={'error': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
+        obj = request.GET.get('q')
+        print(obj)
+        restaurant = Restaurant.objects.all()
+        print(str(restaurant))
+        matcher = SequenceMatcher(None, str(obj), str(restaurant))
+        similarity = matcher.ratio()
+        result = obj in restaurant
+        print(similarity)
+        if similarity >= 0.1:
+            return Response(data={'message': Restaurant.objects.filter(restaurant_name__in=obj)}, status=status.HTTP_200_OK)
+        return Response(data={'message': 'Invalid request'})
+
 
     def show_restaurant(self, request):
         restaurant_info = Restaurant.objects.all()
@@ -64,7 +72,7 @@ class RestaurantCategoryActionViewSet(ViewSet):
 
 # done
 class RestaurantViewSet(ViewSet):
-    permission_classes = [IsAuthenticated, IsOwner]
+    # permission_classes = [IsAuthenticated, IsOwner]
 
     def add_restaurant(self, request):
         # author = request.user

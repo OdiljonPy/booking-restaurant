@@ -1,54 +1,59 @@
 from datetime import timedelta, datetime
 
 from django.contrib.auth import update_session_auth_hash
-from rest_framework import status, viewsets, request, generics
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status, viewsets
+
 from rest_framework.response import Response
-from rest_framework.viewsets import ViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.hashers import check_password
 from authentication.models import User, OTP
 from rest_framework.permissions import IsAuthenticated
-from .serializers import UserSerializer, OTPSerializer, ChangePasswordSerializer
-from .utils import send_otp, generate_otp_code
+from .serializers import UserSerializer, LoginSerializer, OTPSerializer, ChangePasswordSerializer
+from .utils import send_otp
 
 
 class UserViewSet(viewsets.ViewSet):
-
-    def create(self, request, ):
+    @swagger_auto_schema(request_body=UserSerializer())
+    def create(self, request):
         data = request.data  # Post request
         user = User.objects.filter(username=data['username']).first()  # Is there a user or not?
-        if not user:  # if not user in database
-            serializer = UserSerializer(data=data)  # User creating
-            if serializer.is_valid():
-                user_validate = serializer.save()
-                otp = OTP.objects.create(user_id=user_validate.id, otp_code=generate_otp_code())
-                otp.expire_data = otp.created_at + timedelta(minutes=1)
-                otp.save()
-                send_otp(otp)
-                return Response({'result': {'otp_key': otp.otp_key}, 'ok': True}, status=status.HTTP_201_CREATED)
-
-        if not user.is_verified:  # There is a user but not verified
+        if user and user.is_verified:
+            return Response({"error": "User already exists!", "ok": False}, status=status.HTTP_400_BAD_REQUEST)
+        if user:
             serializer = UserSerializer(user, data=data, partial=True)
-            if serializer.is_valid():
-                user_validate = serializer.save()  # Update and create a new otp
-                otp = OTP.objects.create(user_id=user_validate.id, otp_code=generate_otp_code())
-                otp.expire_data = otp.created_at + timedelta(minutes=1)
-                otp.save()
-                send_otp(otp)
-                return Response({'result': {'otp_key': otp.otp_key}, 'ok': True}, status=status.HTTP_201_CREATED)
+        else:
+            serializer = UserSerializer(data=data)
 
-        return Response({'error': 'User already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            return Response({"error": serializer.errors, 'ok': False})
+        user_validate = serializer.save()
+        otp_all = OTP.objects.filter(user_id=user_validate.id)
+        if otp_all and len(otp_all) >= 3 and otp_all.order_by('-created_at').first().created_at + timedelta(hours=12) > datetime.now():
+            return Response({"error":"12 soatdan keyin urunib ko'r bratishka"})
+        otp = OTP.objects.create(user_id=user_validate.id)
+        otp.user.created_at += timedelta(minutes=1)
+        otp.save()
+        send_otp(otp)
+        return Response({"result": {'otp_key': otp.otp_key}, "ok": True}, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        request_body=LoginSerializer(),
+        responses={200: openapi.Response(
+            description='Successful',
+            schema=openapi.Schema(type=openapi.TYPE_OBJECT,
+                                  properties={
+                                      'access_token': openapi.Schema(type=openapi.TYPE_STRING,
+                                                                     description='access_token'),
+                                      "refresh_token": openapi.Schema(type=openapi.TYPE_STRING,
+                                                                      description="refresh_token")}))},
+    )
     def login(self, request):
         data = request.data
         user = User.objects.filter(username=data['username']).first()
-        if not user:
+        if not user or user.is_verified:
             return Response({'error': 'User not found', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
-        if not user.is_verified:
-            return Response({'error': 'User does not exists', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
         if check_password(data['password'], user.password):
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
@@ -57,13 +62,18 @@ class UserViewSet(viewsets.ViewSet):
 
 
 class OtpViewSet(viewsets.ViewSet):
+    @swagger_auto_schema(
+        request_body=OTPSerializer(),
+
+    )
     def verify(self, request):
         data = request.data
+
         if not data.get('otp_code') is None or not data.get('otp_key') is None:
             otp = OTP.objects.filter(otp_key=data['otp_key']).first()
             if not otp:
                 return Response({'error': 'OTP not found', 'ok': False}, status=status.HTTP_400_BAD_REQUEST, )
-            if otp.expire_data < datetime.now():
+            if otp.user.created_at < datetime.now():
                 return Response({'error': 'OTP expired', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
             if otp.otp_code != data['otp_code']:
                 return Response({'error': 'OTP code mismatch', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
@@ -72,44 +82,27 @@ class OtpViewSet(viewsets.ViewSet):
             user.save(update_fields=['is_verified'])
             otp.delete()
             return Response({'result': 'Success', 'ok': True}, status=status.HTTP_200_OK)
-        return Response({'error': 'otp_code and otp_key not', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'otp_code or otp_key not found', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
 
-    @api_view(['POST'])
-    @permission_classes([IsAuthenticated])
-    def change_password(self, request):
-        if request.method == 'POST':
-            serializer = ChangePasswordSerializer(data=request.data)
-            if serializer.is_valid():
-                user = request.user
-                if user.check_password(serializer.data.get('old_password')):
-                    user.set_password(serializer.data.get('new_password'))
-                    user.save()
-                    update_session_auth_hash(request, user)  # To update session after password change
-                    return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
-                return Response({'error': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# class ChangeViewSet(viewsets.ViewSet):    # @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def change_password(self, request):
-#     if request.method == 'POST':
-#         serializer = ChangePasswordSerializer(data=request.data)
-#         if serializer.is_valid():
-#             user = request.user
-#             if user.check_password(serializer.data.get('old_password')):
-#                 user.set_password(serializer.data.get('new_password'))
-#                 user.save()
-#                 update_session_auth_hash(request, user)  # To update session after password change
-#                 return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
-#             return Response({'error': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class ChangePasswordViewSet(viewsets.ViewSet):
+    permission_classes = (IsAuthenticated,)
 
-# @permission_classes([IsAuthenticated])
-# def change(self, request):
-# user = User.objects.filter(username=data['username'])
-# print(user)
-# if check_password(data['old_password'], user.password) is False:
-#     return Response(data={"error": "passwords are not same!"}, status=status.HTTP_400_BAD_REQUEST)
-# user.password = make_password(data['new_password'])
-# user.save(update_fields=['password'])
-# return Response(data={"message": "successfully changed."}, status=status.HTTP_200_OK)
+    def update(self, request):
+        user = request.user
+        serializer = ChangePasswordSerializer(data=request.data)
+
+        if serializer.is_valid():
+            # Checking if old password is correct
+            if not user.check_password(serializer.data.get('old_password')):
+                return Response({'old_password': ['Old password is incorrect.'], 'ok': False},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            # Set password and save
+            user.set_password(serializer.data.get('new_password'))
+            user.save()
+            update_session_auth_hash(request, user)  # Password Hashing
+
+            return Response({'status': 'password successfully changed', 'ok': True}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
