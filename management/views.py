@@ -135,7 +135,7 @@ class ManagementViewSet(viewsets.ViewSet):
         return Response({"message": "Invalid data", "status": status.HTTP_400_BAD_REQUEST})
 
     @swagger_auto_schema(
-        operation_description="List the restaurants managers",
+        operation_description="List all restaurants managers",
         responses={200: 'List of all managers'}
     )
     def list(self, request):
