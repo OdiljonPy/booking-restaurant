@@ -11,7 +11,7 @@ class RestaurantCategory(models.Model):
 
 
 class Restaurant(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     picture = models.ImageField(upload_to='images/restaurants/',
                                 default='images/restaurants/default_restaurant.jpg')  # default= need to add
@@ -75,7 +75,7 @@ class MenuType(models.Model):
 
 class RestaurantMenu(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
-    menu_type = models.ForeignKey(MenuType, on_delete=models.CASCADE, blank=True, null=True)
+    menu_type = models.ForeignKey(MenuType, on_delete=models.CASCADE)
 
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
