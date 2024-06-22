@@ -6,8 +6,6 @@ from authentication.models import User
 from restaurants.models import Restaurant, RestaurantRoom, RestaurantMenu
 
 
-
-
 class Occasion(models.Model):
     occasion_name = models.CharField(max_length=100)
 
@@ -17,7 +15,8 @@ class Occasion(models.Model):
     def __str__(self):
         return self.occasion_name
 
-#TODO:need to add function calculate total price or fix exist function.
+
+# TODO:need to add function calculate total price or fix exist function.
 class OrderItems(models.Model):
     menu = models.ForeignKey(RestaurantMenu, on_delete=models.CASCADE)
     amount = models.IntegerField(default=0)
@@ -40,7 +39,7 @@ class Booking(models.Model):
     contact_number = models.CharField(max_length=11)
     contact_username = models.CharField(max_length=120)
     comment = models.TextField(blank=True, null=True)
-    occasion = models.ManyToManyField(Occasion, blank=True, null=True)
+    occasion = models.ManyToManyField(Occasion)
     booked_time = models.DateTimeField(auto_now_add=True)
     planed_time = models.DateTimeField(default=datetime.now)
 

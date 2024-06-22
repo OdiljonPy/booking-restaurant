@@ -23,6 +23,11 @@ class OTPSerializer(serializers.ModelSerializer):
         fields = ['id', 'otp_code', 'otp_key']
 
 
+class ReSetPasswordSerializer(serializers.ModelSerializer):
+    token = serializers.UUIDField()
+    password = serializers.CharField(max_length=120)
+
+
 class UserPasswordSerializer(serializers.Serializer):
     class Meta:
         model = User
