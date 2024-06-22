@@ -10,12 +10,21 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import check_password, make_password
 from authentication.models import User, OTP
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .serializers import UserSerializer, LoginSerializer, OTPSerializer, ChangePasswordSerializer
+from .serializers import (
+    UserSerializer, LoginSerializer, OTPSerializer, ChangePasswordSerializer, ResetUserPasswordSerializer,
+    OTPUserPasswordSerializer, NewPasswordSerializer
+)
 from .utils import send_otp
 
 
 class UserViewSet(viewsets.ViewSet):
-    @swagger_auto_schema(request_body=UserSerializer())
+    @swagger_auto_schema(request_body=UserSerializer(),
+                         responses={201: openapi.Response(
+                             description='otp_key',
+                             schema=openapi.Schema(type=openapi.TYPE_OBJECT,
+                                                   properties={
+                                                       'otp_key': openapi.Schema(type=openapi.TYPE_STRING,
+                                                                                 description='otp_key')}))})
     def create(self, request):
         data = request.data  # Post request
         user = User.objects.filter(username=data['username']).first()  # Is there a user or not?
@@ -53,7 +62,7 @@ class UserViewSet(viewsets.ViewSet):
     def login(self, request):
         data = request.data
         user = User.objects.filter(username=data['username']).first()
-        if not user or user.is_verified:
+        if not user or not user.is_verified:
             return Response({'error': 'User not found', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
         if check_password(data['password'], user.password):
             refresh = RefreshToken.for_user(user)
@@ -65,7 +74,7 @@ class UserViewSet(viewsets.ViewSet):
 class OtpViewSet(viewsets.ViewSet):
     @swagger_auto_schema(
         request_body=OTPSerializer(),
-
+        responses={200: openapi.Response(description='Successful')}
     )
     def verify(self, request):
         data = request.data
@@ -89,6 +98,8 @@ class OtpViewSet(viewsets.ViewSet):
 class ChangePasswordViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticated,)
 
+    @swagger_auto_schema(request_body=ChangePasswordSerializer,
+                         responses={200: openapi.Response(description='Successful')})
     def update(self, request):
         user = request.user
         serializer = ChangePasswordSerializer(data=request.data)
@@ -112,16 +123,30 @@ class ChangePasswordViewSet(viewsets.ViewSet):
 class ResetPassword(viewsets.ViewSet):
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(request_body=ResetUserPasswordSerializer,
+                         responses={201: openapi.Response(
+                             description='otp_key',
+                             schema=openapi.Schema(type=openapi.TYPE_OBJECT,
+                                                   properties={
+                                                       'otp_key': openapi.Schema(type=openapi.TYPE_STRING,
+                                                                                 description='otp_key')}))})
     def reset(self, request):
-        data = request.data
-        user = User.objects.filter(username=data['username']).first()
-        if not user and not user.is_verified:
+        data = request.data['username']
+        user = User.objects.filter(username=data).first()
+        if not user or not user.is_verified:
             return Response({"error": "User not found!", "ok": False})
         otp = OTP.objects.create(user_id=user.id)
         otp.save()
         send_otp(otp)
-        return Response({"token": otp.otp_key, 'ok': True}, status=status.HTTP_200_OK)
+        return Response({"otp_key": otp.otp_key, 'ok': True}, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(request_body=OTPUserPasswordSerializer,
+                         responses={200: openapi.Response(
+                             description='otp_token',
+                             schema=openapi.Schema(type=openapi.TYPE_OBJECT,
+                                                   properties={
+                                                       'otp_token': openapi.Schema(type=openapi.TYPE_STRING,
+                                                                                   description='otp_token')}))})
     def verify(self, request):
         otp_key = request.data['otp_key']
         otp_code = request.data['otp_code']
@@ -137,21 +162,22 @@ class ResetPassword(viewsets.ViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         otp.created_at += timedelta(minutes=3)
         otp.save()
-        return Response({"Message": otp.otp_token, 'ok': True}, status=status.HTTP_200_OK)
+        return Response({"otp_token": otp.otp_token, 'ok': True}, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        request_body=NewPasswordSerializer(),
+        responses={200: openapi.Response(description='Successful')})
     def reset_new(self, request):
         token = request.data['otp_token']
-        otp_all = OTP.objects.filter(otp_token=token)
-        if not otp_all:
+        otp = OTP.objects.filter(otp_token=token).first()
+        serializer = NewPasswordSerializer(data=request.data)
+
+        if not otp:
             return Response({'error': 'token is worst!'}, status=status.HTTP_400_BAD_REQUEST)
-        if otp_all and len(otp_all) >= 3 and otp_all.order_by('-created_at').first().created_at + timedelta(
-                hours=12) > datetime.now():
-            return Response({"error": "token is Trueexpired or to many attempts! Try after 12 hours", "ok": False},
-                            status=status.HTTP_400_BAD_REQUEST)
+
         password = request.data['password']
-        user = User.objects.filter(id=otp_all.first.user.id)
-        print(user)
+        user = User.objects.update(id=otp.user.id)
         user.password = make_password(password)
         user.save(update_fields=['password'])
-        otp_all.delete()
+        otp.delete()
         return Response({'ok': True}, status=status.HTTP_200_OK)

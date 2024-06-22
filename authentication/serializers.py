@@ -1,5 +1,9 @@
+import uuid
+
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
+from authentication.validations import validate_uz_number
+from authentication.utils import generate_otp_code
 
 from .models import User, OTP
 
@@ -7,7 +11,7 @@ from .models import User, OTP
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'password']
+        fields = ['username', 'first_name', 'password']
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -20,7 +24,7 @@ class UserSerializer(serializers.ModelSerializer):
 class OTPSerializer(serializers.ModelSerializer):
     class Meta:
         model = OTP
-        fields = ['id', 'otp_code', 'otp_key']
+        fields = ['otp_code', 'otp_key']
 
 
 class ReSetPasswordSerializer(serializers.ModelSerializer):
@@ -63,3 +67,26 @@ class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["username", "password"]
+
+
+class ResetUserPasswordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username']
+        username = serializers.CharField(max_length=13, validators=[validate_uz_number])
+
+
+class OTPUserPasswordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OTP
+        fields = ['otp_code', 'otp_key']
+        otp_code = serializers.IntegerField(default=generate_otp_code)
+        opt_key = serializers.UUIDField(default=uuid.UUID)
+
+
+class NewPasswordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OTP
+        fields = ['otp_token', 'password']
+        otp_token = serializers.UUIDField(default=uuid.uuid4)
+        password = serializers.CharField(required=True)
