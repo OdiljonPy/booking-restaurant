@@ -17,7 +17,6 @@ class RestaurantViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
-        method='GET',
         operation_description="Retrieve a list of all restaurants",
         responses={200: 'List of all restaurants'}
     )
