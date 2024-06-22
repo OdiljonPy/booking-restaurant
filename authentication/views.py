@@ -72,17 +72,25 @@ class OtpViewSet(viewsets.ViewSet):
             return Response({'result': 'Success', 'ok': True}, status=status.HTTP_200_OK)
         return Response({'error': 'otp_code and otp_key not', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
 
-    @api_view(['POST'])
-    @permission_classes([IsAuthenticated])
-    def change_password(self, request):
-        if request.method == 'POST':
-            serializer = ChangePasswordSerializer(data=request.data)
-            if serializer.is_valid():
-                user = request.user
-                if user.check_password(serializer.data.get('old_password')):
-                    user.set_password(serializer.data.get('new_password'))
-                    user.save()
-                    update_session_auth_hash(request, user)  # To update session after password change
-                    return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
-                return Response({'error': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ChangePasswordViewSet(viewsets.ViewSet):
+    permission_classes = (IsAuthenticated,)
+
+    def update(self, request):
+        user = request.user
+        serializer = ChangePasswordSerializer(data=request.data)
+
+        if serializer.is_valid():
+            # Checking if old password is correct
+            if not user.check_password(serializer.data.get('old_password')):
+                return Response({'old_password': ['Old password is incorrect.'], 'ok': False},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            # Set password and save
+            user.set_password(serializer.data.get('new_password'))
+            user.save()
+            update_session_auth_hash(request, user)  # Password Hashing
+
+            return Response({'status': 'password successfully changed', 'ok': True}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
