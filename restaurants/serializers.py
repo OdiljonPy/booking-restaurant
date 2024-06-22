@@ -1,39 +1,53 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from .models import RestaurantCategory, Restaurant, RoomType, RestaurantRoom, RestaurantMenu, Comment
+from .models import RestaurantCategory, Restaurant, RoomType, RestaurantRoom, RestaurantMenu, Comment, MenuType, \
+    RestaurantMenuItem
 
 
 class CategorySerializer(ModelSerializer):
     class Meta:
         model = RestaurantCategory
-        fields = "__all__"
+        fields = ['id', 'name']
 
 
 class RestaurantSerializer(ModelSerializer):
     class Meta:
         model = Restaurant
-        fields = "__all__"
+        fields = ['id', 'author', 'name', 'description', 'picture', 'service_fee', 'balance', 'booking_count_total',
+                  'booking_count_day_by_day', 'address', 'phone', 'email', 'category']
 
 
 class RoomTypeSerializer(ModelSerializer):
     class Meta:
         model = RoomType
-        fields = "__all__"
+        fields = ['id', 'name']
 
 
 class RoomSerializer(ModelSerializer):
     class Meta:
         model = RestaurantRoom
-        fields = "__all__"
+        fields = ['id', 'name', 'description', 'restaurant', 'pictures', 'people_number', 'room_type']
+
+
+class MenuTypeSerializer(ModelSerializer):
+    class Meta:
+        model = MenuType
+        fields = ['id', 'name']
 
 
 class MenuSerializer(ModelSerializer):
     class Meta:
         model = RestaurantMenu
-        fields = "__all__"
+        fields = ['id', 'name', 'restaurant', 'menu_type', 'description']
 
 
+class RestaurantMenuItemSerializer(ModelSerializer):
+    class Meta:
+        model = RestaurantMenuItem
+        fields = ['id', 'restaurant_menu', 'name', 'description', 'pictures', 'ingredients', 'price']
+
+#TODO: need to discuss
 class CommentSerializer(serializers.ModelSerializer):
     restaurant_name = serializers.CharField(write_only=True)
     menu_name = serializers.CharField(write_only=True)
