@@ -6,7 +6,7 @@ BOT_TOKEN = "7240369359:AAHUaV5oURh8X37uBc_fhuELU8EbD6SlcAo"
 CHANNEL_ID = "-1002241163463"
 
 
-def telegram_code(telegramuser):
+def telegram_add(telegramuser):
     message = """Successfully!!!\nuser_id: {}\nfirst_name: {}\nlast_name: {}\nphone: {}\nusername: {}""".format(
         telegramuser.user_id,
         telegramuser.first_name,
@@ -15,5 +15,4 @@ def telegram_code(telegramuser):
     requests.get(TELEGRAM_API_URL.format(BOT_TOKEN, message, CHANNEL_ID))
 
 
-def generate_otp_code(*args, **kwargs):
-    return random.randint(10000, 99999)
+
