@@ -18,23 +18,25 @@ class UserViewSet(viewsets.ViewSet):
     @swagger_auto_schema(request_body=UserSerializer())
     def create(self, request):
         data = request.data  # Post request
-        user = User.objects.filter(username=data['username']).first()  # Is there a user or not?
+        user = User.objects.filter(username=data['username']).first()
+        print(user)# Is there a user or not?
         if not user:  # if not user in database
             serializer = UserSerializer(data=data)  # User creating
             if serializer.is_valid():
                 user_validate = serializer.save()
-                otp = OTP.objects.create(user_id=user_validate.id)
-                otp.user.created_at = otp.created_at + timedelta(minutes=1)
+                otp = OTP.objects.create(user_id=user_validate.id, otp_code=generate_otp_code())
+                otp.expire_data = otp.created_at + timedelta(minutes=1)
                 otp.save()
                 send_otp(otp)
                 return Response({'result': {'otp_key': otp.otp_key}, 'ok': True}, status=status.HTTP_201_CREATED)
+            return Response({"error": serializer.errors})
 
-        if not user.is_verified:  # There is a user but not verified
+        if user and not user.is_verified:  # There is a user but not verified
             serializer = UserSerializer(user, data=data, partial=True)
             if serializer.is_valid():
                 user_validate = serializer.save()  # Update and create a new otp
                 otp = OTP.objects.create(user_id=user_validate.id, otp_code=generate_otp_code())
-                otp.user.created_at = otp.created_at + timedelta(minutes=1)
+                otp.expire_data = otp.created_at + timedelta(minutes=1)
                 otp.save()
                 send_otp(otp)
                 return Response({'result': {'otp_key': otp.otp_key}, 'ok': True}, status=status.HTTP_201_CREATED)
@@ -75,7 +77,7 @@ class OtpViewSet(viewsets.ViewSet):
             otp = OTP.objects.filter(otp_key=data['otp_key']).first()
             if not otp:
                 return Response({'error': 'OTP not found', 'ok': False}, status=status.HTTP_400_BAD_REQUEST, )
-            if otp.user.created_at < datetime.now():
+            if otp.user.created_at > datetime.now():
                 return Response({'error': 'OTP expired', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
             if otp.otp_code != data['otp_code']:
                 return Response({'error': 'OTP code mismatch', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
