@@ -2,7 +2,6 @@ from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 from .models import Booking, Occasion, OrderFreeTable, OrderFreeTime
 
-
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
