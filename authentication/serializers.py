@@ -7,7 +7,7 @@ from .models import User, OTP
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'password']
+        fields = ['id', 'username', 'email', 'first_name', 'password']
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -17,13 +17,17 @@ class UserSerializer(serializers.ModelSerializer):
         return super().save(**kwargs)
 
 
+class ChangePasswordSerializer(serializers.Serializer):
+
+
+
 class OTPSerializer(serializers.ModelSerializer):
     class Meta:
         model = OTP
         fields = ['id', 'otp_code', 'otp_key']
 
 
-class ChangePasswordSerializer(serializers.Serializer):
-
-    old_password = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True)
+class LoginSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'password']
