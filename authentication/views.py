@@ -4,14 +4,13 @@ from django.contrib.auth import update_session_auth_hash
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, viewsets
-from rest_framework.decorators import api_view, permission_classes
 
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import check_password
 from authentication.models import User, OTP
 from rest_framework.permissions import IsAuthenticated
-from .serializers import UserSerializer, LoginSerializer, OTPSerializer
+from .serializers import UserSerializer, LoginSerializer, OTPSerializer, ChangePasswordSerializer
 from .utils import send_otp, generate_otp_code
 
 
@@ -25,7 +24,7 @@ class UserViewSet(viewsets.ViewSet):
             if serializer.is_valid():
                 user_validate = serializer.save()
                 otp = OTP.objects.create(user_id=user_validate.id)
-                otp.expire_data = otp.created_at + timedelta(minutes=1)
+                otp.user.created_at = otp.created_at + timedelta(minutes=1)
                 otp.save()
                 send_otp(otp)
                 return Response({'result': {'otp_key': otp.otp_key}, 'ok': True}, status=status.HTTP_201_CREATED)
@@ -35,7 +34,7 @@ class UserViewSet(viewsets.ViewSet):
             if serializer.is_valid():
                 user_validate = serializer.save()  # Update and create a new otp
                 otp = OTP.objects.create(user_id=user_validate.id, otp_code=generate_otp_code())
-                otp.expire_data = otp.created_at + timedelta(minutes=1)
+                otp.user.created_at = otp.created_at + timedelta(minutes=1)
                 otp.save()
                 send_otp(otp)
                 return Response({'result': {'otp_key': otp.otp_key}, 'ok': True}, status=status.HTTP_201_CREATED)
@@ -76,7 +75,7 @@ class OtpViewSet(viewsets.ViewSet):
             otp = OTP.objects.filter(otp_key=data['otp_key']).first()
             if not otp:
                 return Response({'error': 'OTP not found', 'ok': False}, status=status.HTTP_400_BAD_REQUEST, )
-            if otp.created_at < datetime.now():
+            if otp.user.created_at < datetime.now():
                 return Response({'error': 'OTP expired', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
             if otp.otp_code != data['otp_code']:
                 return Response({'error': 'OTP code mismatch', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
@@ -86,3 +85,26 @@ class OtpViewSet(viewsets.ViewSet):
             otp.delete()
             return Response({'result': 'Success', 'ok': True}, status=status.HTTP_200_OK)
         return Response({'error': 'otp_code and otp_key not', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordViewSet(viewsets.ViewSet):
+    permission_classes = (IsAuthenticated,)
+
+    def update(self, request):
+        user = request.user
+        serializer = ChangePasswordSerializer(data=request.data)
+
+        if serializer.is_valid():
+            # Checking if old password is correct
+            if not user.check_password(serializer.data.get('old_password')):
+                return Response({'old_password': ['Old password is incorrect.'], 'ok': False},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            # Set password and save
+            user.set_password(serializer.data.get('new_password'))
+            user.save()
+            update_session_auth_hash(request, user)  # Password Hashing
+
+            return Response({'status': 'password successfully changed', 'ok': True}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
