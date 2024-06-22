@@ -17,6 +17,7 @@ class Restaurant(models.Model):
                                 default='images/restaurants/default_restaurant.jpg')  # default= need to add
     description = models.TextField()
     service_fee = models.IntegerField()
+    balance = models.FloatField(default=0)
 
     booking_count_total = models.IntegerField(default=0)
     booking_count_day_by_day = models.IntegerField(default=0)
@@ -88,3 +89,18 @@ class RestaurantMenu(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Comment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    menu = models.ForeignKey(RestaurantMenu, on_delete=models.CASCADE)
+    comment = models.TextField()
+    is_visible = models.BooleanField(default=True)
+    rating = models.IntegerField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def str(self):
+        return self.comment
