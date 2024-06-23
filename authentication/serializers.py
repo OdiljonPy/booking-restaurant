@@ -19,14 +19,9 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def save(self, **kwargs):
-        print(self.validated_data)
-        print("=" * 50)
         self.validated_data['password'] = make_password(self.validated_data['password'])
         return super().save(**kwargs)
 
-    def update(self, instance, validated_data):
-        print(instance)
-        print(validated_data)
 
 
 class OTPSerializer(serializers.ModelSerializer):

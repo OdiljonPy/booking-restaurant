@@ -81,9 +81,6 @@ class OtpViewSet(viewsets.ViewSet):
 
         if not data.get('otp_code') is None or not data.get('otp_key') is None:
             otp = OTP.objects.filter(otp_key=data['otp_key']).first()
-            print(otp)
-            print(data['otp_code'])
-            print(data['otp_key'])
             if not otp:
                 return Response({'error': 'OTP not found', 'ok': False}, status=status.HTTP_400_BAD_REQUEST, )
             if otp.user.created_at > datetime.now():
@@ -151,9 +148,7 @@ class ResetPassword(viewsets.ViewSet):
                                                        'otp_token': openapi.Schema(type=openapi.TYPE_STRING,
                                                                                    description='otp_token')}))})
     def verify(self, request):
-        print(request)
         otp_key = request.data['otp_key']
-        print(otp_key)
         otp_code = request.data['otp_code']
         otp = OTP.objects.filter(otp_key=otp_key).first()
         if not otp:
