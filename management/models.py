@@ -21,6 +21,7 @@ class Manager(models.Model):
     phone_number = models.CharField(max_length=15, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
     hire_date = models.DateField(default=timezone.now)
+    fire_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
