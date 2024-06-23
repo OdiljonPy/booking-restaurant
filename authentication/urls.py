@@ -7,5 +7,4 @@ urlpatterns = [
     path('verify/', OtpViewSet.as_view({'post': 'verify'}), name='verify'),
     path('password/update/', ChangePasswordViewSet.as_view({'put': 'update'})),
     path('password/send_token/', ResetPassword.as_view({'post': 'reset'}))
-
 ]
