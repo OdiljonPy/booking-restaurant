@@ -2,6 +2,8 @@ import uuid
 
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
+from rest_framework.serializers import Serializer
+
 from authentication.validations import validate_uz_number
 from authentication.utils import generate_otp_code
 
@@ -17,8 +19,14 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def save(self, **kwargs):
+        print(self.validated_data)
+        print("=" * 50)
         self.validated_data['password'] = make_password(self.validated_data['password'])
         return super().save(**kwargs)
+
+    def update(self, instance, validated_data):
+        print(instance)
+        print(validated_data)
 
 
 class OTPSerializer(serializers.ModelSerializer):
@@ -63,30 +71,25 @@ class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True)
 
 
-class LoginSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["username", "password"]
+class LoginSerializer(Serializer):
+    username = serializers.CharField(max_length=13, validators=[validate_uz_number, ])
+    password = serializers.CharField(max_length=120)
 
 
-class ResetUserPasswordSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username']
-        username = serializers.CharField(max_length=13, validators=[validate_uz_number])
+class ResetUserPasswordSerializer(Serializer):
+    username = serializers.CharField(max_length=13, validators=[validate_uz_number])
 
 
-class OTPUserPasswordSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OTP
-        fields = ['otp_code', 'otp_key']
-        otp_code = serializers.IntegerField(default=generate_otp_code)
-        opt_key = serializers.UUIDField(default=uuid.UUID)
+class OTPUserPasswordSerializer(Serializer):
+    otp_code = serializers.IntegerField(default=generate_otp_code)
+    otp_key = serializers.UUIDField(default=uuid.UUID)
 
 
-class NewPasswordSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OTP
-        fields = ['otp_token', 'password']
-        otp_token = serializers.UUIDField(default=uuid.uuid4)
-        password = serializers.CharField(required=True)
+class NewPasswordSerializer(Serializer):
+    otp_token = serializers.UUIDField(default=uuid.uuid4)
+    password = serializers.CharField(required=True)
+
+# class SetNewPasswordSerializer(Serializer):
+#     otp_token = serializers.UUIDField()
+#     password = serializers.CharField(max_length=20)
+#     rep_password = serializers.CharField(max_length=20)

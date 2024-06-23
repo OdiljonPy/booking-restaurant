@@ -81,11 +81,14 @@ class OtpViewSet(viewsets.ViewSet):
 
         if not data.get('otp_code') is None or not data.get('otp_key') is None:
             otp = OTP.objects.filter(otp_key=data['otp_key']).first()
+            print(otp)
+            print(data['otp_code'])
+            print(data['otp_key'])
             if not otp:
                 return Response({'error': 'OTP not found', 'ok': False}, status=status.HTTP_400_BAD_REQUEST, )
             if otp.user.created_at > datetime.now():
                 return Response({'error': 'OTP expired', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
-            if otp.otp_code != data['otp_code']:
+            if otp.otp_code != data['otp_code'] or otp.otp_key != data['otp_key']:
                 return Response({'error': 'OTP code mismatch', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
             user = otp.user
             user.is_verified = True
@@ -148,7 +151,9 @@ class ResetPassword(viewsets.ViewSet):
                                                        'otp_token': openapi.Schema(type=openapi.TYPE_STRING,
                                                                                    description='otp_token')}))})
     def verify(self, request):
+        print(request)
         otp_key = request.data['otp_key']
+        print(otp_key)
         otp_code = request.data['otp_code']
         otp = OTP.objects.filter(otp_key=otp_key).first()
         if not otp:
@@ -170,14 +175,12 @@ class ResetPassword(viewsets.ViewSet):
     def reset_new(self, request):
         token = request.data['otp_token']
         otp = OTP.objects.filter(otp_token=token).first()
-        serializer = NewPasswordSerializer(data=request.data)
 
         if not otp:
             return Response({'error': 'token is worst!'}, status=status.HTTP_400_BAD_REQUEST)
-
-        password = request.data['password']
-        user = User.objects.update(id=otp.user.id)
-        user.password = make_password(password)
+        user = User.objects.filter(username=otp.user.username).first()
+        if not user:
+            return Response({"error": "user not exists", 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
+        user.password = make_password(request.data['password'])
         user.save(update_fields=['password'])
-        otp.delete()
         return Response({'ok': True}, status=status.HTTP_200_OK)
