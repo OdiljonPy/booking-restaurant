@@ -14,7 +14,7 @@ from drf_yasg import openapi
 
 
 class RestaurantViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         operation_description="List all restaurants",
@@ -53,7 +53,7 @@ class RestaurantViewSet(viewsets.ViewSet):
                         "balance": 1000.0,
                         "booking_count_total": 25,
                         "booking_count_day_by_day": 5,
-                        "address": "123 Main St, City, Country",
+                        "address": "Olmazor distrit,BA IT Academy,Tashkent",
                         "phone": "+123456789",
                         "email": "restaurant@example.com",
                         "category": "Category Name"
@@ -164,10 +164,8 @@ class RestaurantViewSet(viewsets.ViewSet):
         bookings = Booking.objects.filter(restaurants_id=rest_id,
                                           booked_time__date__range=[parsed_start_date, parsed_end_date])
         total_bookings = bookings.count()
-        total_revenue = PaymentWithHistory.objects.filter(
-            restaurants_id=rest_id, created_at__date__range=[parsed_start_date, parsed_end_date]
-        ).aggregate(total=Sum('order_price'))['total'] or 0
-
+        total_revenue = bookings.aggregate(
+            total=Sum('total_sum'))['total'] or 0
         stats = {
             'total_bookings': total_bookings,
             'total_revenue': total_revenue,
