@@ -1,14 +1,19 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from .models import RestaurantCategory, Restaurant, RoomType, RestaurantRoom, RestaurantMenu, Comment, MenuType, \
-    RestaurantMenuItem
+from .models import RestaurantCategory, Restaurant, RoomType, RestaurantRoom, RestaurantMenu, Comment, MenuType
 
 
 class CategorySerializer(ModelSerializer):
     class Meta:
         model = RestaurantCategory
         fields = ['id', 'name']
+
+
+class CategoryCreateSerializer(ModelSerializer):
+    class Meta:
+        model = RestaurantCategory
+        fields = ['name']
 
 
 class RestaurantSerializer(ModelSerializer):
@@ -21,13 +26,19 @@ class RestaurantSerializer(ModelSerializer):
 class RestaurantCreateSerializer(ModelSerializer):
     class Meta:
         model = Restaurant
-        fields = ['author', 'name', 'phone', 'category']
+        fields = ['author', 'name', 'category']
 
 
 class RoomTypeSerializer(ModelSerializer):
     class Meta:
         model = RoomType
         fields = ['id', 'name']
+
+
+class RoomTypeCreateSerializer(ModelSerializer):
+    class Meta:
+        model = RoomType
+        fields = ['name']
 
 
 class RoomSerializer(ModelSerializer):
@@ -48,6 +59,12 @@ class MenuTypeSerializer(ModelSerializer):
         fields = ['id', 'name']
 
 
+class MenuTypeCreateSerializer(ModelSerializer):
+    class Meta:
+        model = MenuType
+        fields = ['name']
+
+
 class MenuSerializer(ModelSerializer):
     class Meta:
         model = RestaurantMenu
@@ -58,12 +75,6 @@ class MenuCreateSerializer(ModelSerializer):
     class Meta:
         model = RestaurantMenu
         fields = ['name', 'restaurant', 'menu_type']
-
-
-class RestaurantMenuItemSerializer(ModelSerializer):
-    class Meta:
-        model = RestaurantMenuItem
-        fields = ['id', 'restaurant_menu', 'name', 'description', 'pictures', 'ingredients', 'price']
 
 
 # TODO: need to discuss

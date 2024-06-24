@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import RestaurantCategoryViewSet, RestaurantViewSet, RoomTypeViewSet, \
-    RestaurantRoomViewSet, RestaurantMenuViewSet, RestaurantFilterViewSet, CommentViewSet
+    RestaurantRoomViewSet, RestaurantMenuViewSet, RestaurantFilterViewSet, CommentViewSet, MenuTypeViewSet
 
 urlpatterns = [
     path('filter/all/', RestaurantFilterViewSet.as_view({'get': 'show_restaurant'})),
@@ -20,6 +20,9 @@ urlpatterns = [
 
     path('<int:pk>/room/', RestaurantRoomViewSet.as_view(
         {'get': 'show_room_detail', 'post': 'add_room', 'patch': 'edit_room', 'delete': 'delete_room'})),
+
+    path('menu_type/', MenuTypeViewSet.as_view({'post': 'add_menu_type', 'get': 'show_menu_type'})),
+    path('<int:pk>/menu_type/', MenuTypeViewSet.as_view({'patch': 'edit_menu_type', 'delete': 'delete_menu_type'})),
 
     path('menu/', RestaurantMenuViewSet.as_view({'post': 'add_restaurant_menu'})),
     path('<int:pk>/menu/',
