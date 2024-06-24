@@ -31,26 +31,43 @@ class OrderItems(models.Model):
         return self.menu.name
 
 
+status = {
+    1: 'created',
+    2: "paying",  # shu statuslarni xam korib qoyish kerak
+    3: "paid",
+    4: "booked",
+    5: "cancelled",
+
+}
+
+
 class Booking(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+    # Restaurantni Room dan topsa boladi Room Restaurantga Foreign key qilingan - bu xozir admindan qoshgani turibdi
     restaurants = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     room = models.ForeignKey(RestaurantRoom, on_delete=models.CASCADE)
+
     number_of_people = models.IntegerField(default=1)
-    contact_number = models.CharField(max_length=11)
-    contact_username = models.CharField(max_length=120)
+    client_number = models.CharField(max_length=13)
+    client_name = models.CharField(max_length=120)
+
     comment = models.TextField(blank=True, null=True)
-    occasion = models.ManyToManyField(Occasion)
+    # Shu yerga Occasion ochirib tashlansa xam booking ochmashi kerak
+    occasion = models.ForeignKey(Occasion, on_delete=models.SET_NULL, blank=True, null=True, default=1)
+
+    planed_from = models.DateTimeField(default=datetime.now)
+    planed_to = models.DateTimeField(default=datetime.now)
+
     booked_time = models.DateTimeField(auto_now_add=True)
-    planed_time = models.DateTimeField(default=datetime.now)
 
-    order_items = models.ForeignKey(OrderItems, on_delete=models.CASCADE)
-
-    paying_status = models.BooleanField(default=False)
-    status = models.BooleanField(default=True)
+    order_items = models.ManyToManyField(OrderItems)
+    # shu choice ni xam tekshirtirish kerak ekan adminkadan qoshganda
+    # Select a valid choice. 1 is not one of the available choices. shu xatolikni chiqaryapti
+    status = models.CharField(choices=status, default=1, max_length=10)
     total_sum = models.PositiveIntegerField(default=0)
 
     def __str__(self):
-        return self.restaurants.restaurant_name
+        return self.restaurants.name
 
 
 class OrderFreeTable(models.Model):
