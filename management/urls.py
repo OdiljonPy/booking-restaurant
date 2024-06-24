@@ -22,8 +22,8 @@ urlpatterns = [
     }), name='restaurant-bookings'),
 
     path('restaurants/<int:rest_id>/bookings/<int:booking_id>/', BookingViewSet.as_view({
-        'get': 'retrieve', 'post': 'cancel',
+        'get': 'retrieve', 'delete': 'cancel',
     }), name='restaurant-bookings'),
     path('resturants/<int:rest_id>/managers/', ManagementViewSet.as_view({'get': 'list', 'post': 'create'})),
-    path('resturants/<int:rest_id>/managers/<int:manager_id>/employers/', EmployerViewSet.as_view({'get': 'list', 'post': 'create'})),
+    path('resturants/<int:rest_id>/managers/employers/', EmployerViewSet.as_view({'get': 'list', 'post': 'create'})),
 ]
