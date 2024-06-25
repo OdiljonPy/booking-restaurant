@@ -1,22 +1,52 @@
-from django.shortcuts import render
+from drf_yasg.utils import swagger_auto_schema
+
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny
-from restaurants.models import RestaurantMenu
+
+from authentication.models import User
+from restaurants.models import RestaurantMenu, RestaurantRoom, Restaurant
 from booking.models import Booking, Occasion, OrderFreeTable, OrderFreeTime, OrderItems
 from booking.serializers import BookingSerializer, OccasionSerializer, OrderFreeTableSerializer, \
     OrderFreeTimeSerializer
 
 
 class BookingViewSet(ViewSet):
-    def create_booking(self, request, *args, **kwargs):
-        booking_serializer = BookingSerializer(data=request.data)
+    @swagger_auto_schema(
+        operation_summary='Create Booking',
+        operation_description='Create a booking',
+        request_body=BookingSerializer,
+        responses={201: BookingSerializer()},
+        tags=['Booking'],
+    )
+    def create_booking(self, request):
+        data = request.data
+        room = RestaurantRoom.objects.filter(id=request.data['room']).first()
+
+        if not room:
+            return Response({"message": "Room not found", "ok": False, "status": status.HTTP_400_BAD_REQUEST})
+
+        data['restaurants'] = room.restaurant.id
+        data['room'] = room.id
+        data['author'] = User.objects.filter(id=request.data['author']).first().id
+
+        booking_serializer = BookingSerializer(data=data)
+
         if booking_serializer.is_valid():
             booking_serializer.save()
-            return Response({"message": "Booking Added Sucessfully", "status": status.HTTP_201_CREATED})
-        return Response({"message": "please fill the datails", "status": status.HTTP_400_BAD_REQUEST})
+            return Response({"message": "Booking Added Successfully", "status": status.HTTP_201_CREATED})
+        else:
+            print(booking_serializer.errors)
+            return Response({"message": "Please fill the required details", "errors": booking_serializer.errors,
+                             "status": status.HTTP_400_BAD_REQUEST})
 
+    @swagger_auto_schema(
+        operation_summary='Show bookings',
+        operation_description='Show bookings list',
+        responses={200: BookingSerializer()},
+        tags=['Restaurant']
+    )
     def show_bookings(self, request):
         queryset = Booking.objects.all()
         bookings = BookingSerializer(queryset, many=True).data
@@ -24,6 +54,13 @@ class BookingViewSet(ViewSet):
 
 
 class BookingActionsViewSet(ViewSet):
+    @swagger_auto_schema(
+        operation_summary='Show booking details',
+        operation_description='Show booking details',
+        responses={200: BookingSerializer()},
+        tags=['Restaurant']
+
+    )
     def detail_booking(self, request, pk):
         booking_detail = Booking.objects.filter(id=pk).first()
         booking_serializer = BookingSerializer(booking_detail).data
@@ -35,10 +72,10 @@ class BookingActionsViewSet(ViewSet):
         booking_pay = {}
         return Response(data={'data': booking_pay, 'message': f'{pk} id'}, )
 
-    def cancel_booking(self, request, *args, **kwargs):
+    def cancel_booking(self, request, pk):
         pass
 
-    def set_status(self, request, *args, **kwargs):
+    def set_status(self, request, pk):
         pass
 
     def delete_booking(self, request, *args, **kwargs):
