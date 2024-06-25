@@ -18,6 +18,12 @@ class RestaurantSerializer(ModelSerializer):
                   'booking_count_day_by_day', 'address', 'phone', 'email', 'category']
 
 
+class RestaurantCreateSerializer(ModelSerializer):
+    class Meta:
+        model = Restaurant
+        fields = ['author', 'name', 'phone', 'category']
+
+
 class RoomTypeSerializer(ModelSerializer):
     class Meta:
         model = RoomType
@@ -28,6 +34,12 @@ class RoomSerializer(ModelSerializer):
     class Meta:
         model = RestaurantRoom
         fields = ['id', 'name', 'description', 'restaurant', 'pictures', 'people_number', 'room_type']
+
+
+class RoomCreateSerializer(ModelSerializer):
+    class Meta:
+        model = RestaurantRoom
+        fields = ['name', 'restaurant', 'people_number', 'room_type']
 
 
 class MenuTypeSerializer(ModelSerializer):
@@ -42,12 +54,19 @@ class MenuSerializer(ModelSerializer):
         fields = ['id', 'name', 'restaurant', 'menu_type', 'description']
 
 
+class MenuCreateSerializer(ModelSerializer):
+    class Meta:
+        model = RestaurantMenu
+        fields = ['name', 'restaurant', 'menu_type']
+
+
 class RestaurantMenuItemSerializer(ModelSerializer):
     class Meta:
         model = RestaurantMenuItem
         fields = ['id', 'restaurant_menu', 'name', 'description', 'pictures', 'ingredients', 'price']
 
-#TODO: need to discuss
+
+# TODO: need to discuss
 class CommentSerializer(serializers.ModelSerializer):
     restaurant_name = serializers.CharField(write_only=True)
     menu_name = serializers.CharField(write_only=True)
