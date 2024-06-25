@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserViewSet, OtpViewSet, ChangePasswordViewSet, ResetPassword
+from .views import UserViewSet, OtpViewSet, ChangePasswordViewSet, ResetPassword, OTPReset
 
 urlpatterns = [
     path('register/', UserViewSet.as_view({'post': 'create'}), name='register'),
@@ -11,4 +11,7 @@ urlpatterns = [
     path('password/reset/', ResetPassword.as_view({'post': 'reset'})),
     path('password/verify/', ResetPassword.as_view({'post': 'verify'})),
     path('password/reset_new/', ResetPassword.as_view({'post': 'reset_new'})),
+
+    path('/resend_otp/', OTPReset.as_view({'post': 'resend_otp'})),
+
 ]

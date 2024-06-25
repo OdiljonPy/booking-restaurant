@@ -23,7 +23,6 @@ class UserSerializer(serializers.ModelSerializer):
         return super().save(**kwargs)
 
 
-
 class OTPSerializer(serializers.ModelSerializer):
     class Meta:
         model = OTP
@@ -84,7 +83,6 @@ class NewPasswordSerializer(Serializer):
     otp_token = serializers.UUIDField(default=uuid.uuid4)
     password = serializers.CharField(required=True)
 
-# class SetNewPasswordSerializer(Serializer):
-#     otp_token = serializers.UUIDField()
-#     password = serializers.CharField(max_length=20)
-#     rep_password = serializers.CharField(max_length=20)
+
+class OTPResendSerializer(Serializer):
+    otp_key = serializers.UUIDField(default=uuid.uuid4)

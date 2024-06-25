@@ -12,7 +12,7 @@ from authentication.models import User, OTP
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import (
     UserSerializer, LoginSerializer, OTPSerializer, ChangePasswordSerializer, ResetUserPasswordSerializer,
-    OTPUserPasswordSerializer, NewPasswordSerializer
+    OTPUserPasswordSerializer, NewPasswordSerializer, OTPResendSerializer
 )
 from .utils import send_otp
 
@@ -80,17 +80,20 @@ class OtpViewSet(viewsets.ViewSet):
         data = request.data
 
         if not data.get('otp_code') is None or not data.get('otp_key') is None:
+
             otp = OTP.objects.filter(otp_key=data['otp_key']).first()
+
             if not otp:
                 return Response({'error': 'OTP not found', 'ok': False}, status=status.HTTP_400_BAD_REQUEST, )
             if otp.user.created_at > datetime.now():
                 return Response({'error': 'OTP expired', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
-            if otp.otp_code != data['otp_code'] or otp.otp_key != data['otp_key']:
+            if otp.otp_code != data['otp_code'] and otp.otp_key != data['otp_key']:
                 return Response({'error': 'OTP code mismatch', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
             user = otp.user
             user.is_verified = True
             user.save(update_fields=['is_verified'])
-            otp.delete()
+            OTP.objects.filter(user=user).delete()
+
             return Response({'result': 'Success', 'ok': True}, status=status.HTTP_200_OK)
         return Response({'error': 'otp_code or otp_key not found', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -135,6 +138,10 @@ class ResetPassword(viewsets.ViewSet):
         user = User.objects.filter(username=data).first()
         if not user or not user.is_verified:
             return Response({"error": "User not found!", "ok": False})
+        obj_all = OTP.objects.filter(user_id=user.id)
+        if len(obj_all) > 3 and datetime.now() - obj_all.first().created_at > timedelta(hours=12):
+            return Response({'error': 'Too many attempts try after 12 hours', 'ok': False},
+                            status=status.HTTP_400_BAD_REQUEST)
         otp = OTP.objects.create(user_id=user.id)
         otp.save()
         send_otp(otp)
@@ -143,10 +150,12 @@ class ResetPassword(viewsets.ViewSet):
     @swagger_auto_schema(request_body=OTPUserPasswordSerializer,
                          responses={200: openapi.Response(
                              description='otp_token',
-                             schema=openapi.Schema(type=openapi.TYPE_OBJECT,
-                                                   properties={
-                                                       'otp_token': openapi.Schema(type=openapi.TYPE_STRING,
-                                                                                   description='otp_token')}))})
+                             schema=openapi.Schema(
+                                 type=openapi.TYPE_OBJECT,
+                                 properties={
+                                     'otp_token': openapi.Schema(
+                                         type=openapi.TYPE_STRING,
+                                         description='otp_token')}))})
     def verify(self, request):
         otp_key = request.data['otp_key']
         otp_code = request.data['otp_code']
@@ -176,6 +185,37 @@ class ResetPassword(viewsets.ViewSet):
         user = User.objects.filter(username=otp.user.username).first()
         if not user:
             return Response({"error": "user not exists", 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
+        if otp.created_at > datetime.now():
+            return Response({'error': 'OTP expired', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
         user.password = make_password(request.data['password'])
         user.save(update_fields=['password'])
         return Response({'ok': True}, status=status.HTTP_200_OK)
+
+
+class OTPReset(viewsets.ViewSet):
+    @swagger_auto_schema(request_body=OTPResendSerializer,
+                         responses={201: openapi.Response(
+                             description='otp_key',
+                             schema=openapi.Schema(type=openapi.TYPE_OBJECT,
+                                                   properties={
+                                                       'otp_key': openapi.Schema(type=openapi.TYPE_STRING,
+                                                                                 description='otp_key')}))})
+    def resend_otp(self, request):
+        data = request.data
+        obj = OTP.objects.filter(otp_key=data['otp_key']).first()
+
+        if not obj:
+            return Response({'error': 'Otp_key is wrong!', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
+        user = User.objects.filter(username=obj.user.username).first()
+
+        if user and user.is_verified:
+            return Response({'error': 'User already verified!', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
+
+        obj_all = OTP.objects.filter(user=user).order_by('-created_at')
+        if len(obj_all) > 3 or datetime.now() - obj_all.first().created_at > timedelta(minutes=1):
+            return Response({'error': 'Too many attempts try after 12 hours', 'ok': False},
+                            status=status.HTTP_400_BAD_REQUEST)
+        new_otp = OTP.objects.create(user=obj.user)
+        new_otp.save()
+        send_otp(new_otp)
+        return Response({'otp_key': new_otp.otp_key, 'ok': True}, status=status.HTTP_200_OK)
