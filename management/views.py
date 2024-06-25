@@ -27,7 +27,7 @@ class RestaurantViewSet(viewsets.ViewSet):
             )
         },
     )
-    def list(self, request):
+    def list_restaurants(self, request):
         restaurants = Restaurant.objects.all()
         serializer = RestaurantSerializer(restaurants, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -44,7 +44,7 @@ class RestaurantViewSet(viewsets.ViewSet):
             )
         },
     )
-    def retrieve(self, request, rest_id):
+    def retrieve_restaurant(self, request, rest_id):
         exists = Restaurant.objects.filter(pk=rest_id)
         if not exists.exists():
             return Response({'error': 'Restaurant not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -63,7 +63,7 @@ class RestaurantViewSet(viewsets.ViewSet):
             ),
         },
     )
-    def balance(self, request, rest_id):
+    def restaurant_balance(self, request, rest_id):
         restaurant = Restaurant.objects.filter(pk=rest_id)
         if not restaurant.exists():
             return Response({'error': 'Restaurant not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -105,7 +105,7 @@ class RestaurantViewSet(viewsets.ViewSet):
             )
         },
     )
-    def statistics(self, request, rest_id):
+    def restaurant_statistics(self, request, rest_id):
         query_serializer = DateRangeQuerySerializer(data=request.query_params)
         if not query_serializer.is_valid():
             return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -126,6 +126,26 @@ class RestaurantViewSet(viewsets.ViewSet):
             'total_revenue': total_revenue,
         }
         return Response(stats, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_description="Delete the restaurant",
+        operation_summary="Delete restaurant",
+        responses={
+            204: openapi.Response(
+                description='Restaurant deleted successfully',
+            ),
+            404: openapi.Response(
+                description='Restaurant not found',
+            ),
+        },
+    )
+    def delete_restaurant(self, request, rest_id):
+        restaurant_exists = Restaurant.objects.filter(pk=rest_id)
+        if not restaurant_exists.exists():
+            return Response('Restaurant not found', status=status.HTTP_404_NOT_FOUND)
+        restaurant = restaurant_exists.first()
+        restaurant.delete()
+        return Response(data={"message": 'Restaurant deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
 
 class BookingViewSet(viewsets.ViewSet):
@@ -152,7 +172,7 @@ class BookingViewSet(viewsets.ViewSet):
             )
         },
     )
-    def list(self, request, rest_id):
+    def booking_list(self, request, rest_id):
         query_serializer = DateQuerySerializer(data=request.query_params)
         if not query_serializer.is_valid():
             return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -173,7 +193,7 @@ class BookingViewSet(viewsets.ViewSet):
             ),
         },
     )
-    def retrieve(self, request, rest_id, booking_id):
+    def retrieve_booking(self, request, rest_id, booking_id):
         booking_exists = Booking.objects.filter(pk=booking_id, restaurants_id=rest_id)
         if not booking_exists.exists():
             return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -193,7 +213,7 @@ class BookingViewSet(viewsets.ViewSet):
             )
         },
     )
-    def cancel(self, request, rest_id, booking_id):
+    def cancel_booking(self, request, rest_id, booking_id):
         booking_exists = Booking.objects.filter(pk=booking_id, restaurants_id=rest_id)
         if not booking_exists.exists():
             return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -201,6 +221,25 @@ class BookingViewSet(viewsets.ViewSet):
         booking.status = False
         booking.save(update_fields=['status'])
         return Response({'status': 'Booking cancelled'}, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_description="Delete the booking",
+        operation_summary="Delete booking",
+        responses={
+            204: openapi.Response(
+                description='Booking deleted Successfully',
+            ),
+            404: openapi.Response(
+                description='Booking not found'
+            )
+        },
+    )
+    def delete_booking(self, request, rest_id, booking_id):
+        booking_exists = Booking.objects.filter(pk=booking_id, restaurants_id=rest_id)
+        if not booking_exists.exists():
+            return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
+        booking_exists.first().delete()
+        return Response({'message': 'Booking deleted Successfully'}, status=status.HTTP_204_NO_CONTENT)
 
 
 class ManagementViewSet(viewsets.ViewSet):
@@ -219,12 +258,12 @@ class ManagementViewSet(viewsets.ViewSet):
             )
         },
     )
-    def create(self, request, *args, **kwargs):
+    def create_manager(self, request):
         manager_serializer = ManagerSerializer(data=request.data)
         if manager_serializer.is_valid():
             manager_serializer.save()
             return Response({"message": "Manager Added Successfully", "status": status.HTTP_201_CREATED})
-        return Response({"message": "Invalid data", "status": status.HTTP_400_BAD_REQUEST})
+        return Response({"message": "Invalid data"}, status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_description="List all restaurant managers",
@@ -235,7 +274,7 @@ class ManagementViewSet(viewsets.ViewSet):
             )
         },
     )
-    def list(self, request):
+    def list_managers(self, request):
         managers = Manager.objects.all()
         serializer = ManagerSerializer(managers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -257,12 +296,12 @@ class EmployerViewSet(viewsets.ViewSet):
             )
         },
     )
-    def create(self, request, *args, **kwargs):
+    def create_employee(self, request, *args, **kwargs):
         employer_serializer = EmployeeSerializer(data=request.data)
         if employer_serializer.is_valid():
             employer_serializer.save()
             return Response({"message": "Employee Added Successfully", "status": status.HTTP_201_CREATED})
-        return Response({"message": "Invalid data", "status": status.HTTP_400_BAD_REQUEST})
+        return Response({"message": "Invalid data"}, status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_description="List the employees of a manager",
@@ -273,7 +312,7 @@ class EmployerViewSet(viewsets.ViewSet):
             )
         },
     )
-    def list(self, request):
+    def list_employees(self, request):
         employees = Employee.objects.all()
         serializer = EmployeeSerializer(employees, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

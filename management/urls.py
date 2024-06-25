@@ -3,27 +3,29 @@ from .views import RestaurantViewSet, BookingViewSet, ManagementViewSet, Employe
 
 urlpatterns = [
     path('restaurants/', RestaurantViewSet.as_view({
-        'get': 'list',
+        'get': 'list_restaurants',
     }), name='restaurant-list'),
 
     path('restaurants/<int:rest_id>/', RestaurantViewSet.as_view({
-        'get': 'retrieve',
+        'get': 'retrieve_restaurant', 'delete': 'delete_restaurant'
     }), name='restaurant-detail'),
 
     path('restaurants/<int:rest_id>/balance/', RestaurantViewSet.as_view({
-        'get': 'balance',
+        'get': 'restaurant_balance',
     }), name='restaurant-payment-balance'),
 
     path('restaurants/<int:rest_id>/statistics/', RestaurantViewSet.as_view({
-        'get': 'statistics',
+        'get': 'restaurant_statistics',
     }), name='restaurant-statistics'),
     path('restaurants/<int:rest_id>/bookings/', BookingViewSet.as_view({
-        'get': 'list',
+        'get': 'booking_list',
     }), name='restaurant-bookings'),
 
     path('restaurants/<int:rest_id>/bookings/<int:booking_id>/', BookingViewSet.as_view({
-        'get': 'retrieve', 'delete': 'cancel',
+        'get': 'retrieve_booking', 'put': 'cancel_booking', 'delete': 'delete_booking'
     }), name='restaurant-bookings'),
-    path('resturants/<int:rest_id>/managers/', ManagementViewSet.as_view({'get': 'list', 'post': 'create'})),
-    path('resturants/<int:rest_id>/managers/employers/', EmployerViewSet.as_view({'get': 'list', 'post': 'create'})),
+    path('resturants/managers/',
+         ManagementViewSet.as_view({'get': 'list_managers', 'post': 'create_manager'})),
+    path('resturants/managers/employers/',
+         EmployerViewSet.as_view({'get': 'list_employees', 'post': 'create_employee'})),
 ]
