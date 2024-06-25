@@ -64,8 +64,10 @@ class RestaurantViewSet(viewsets.ViewSet):
         },
     )
     def balance(self, request, rest_id):
-        restaurant = Restaurant.objects.filter(pk=rest_id).first()
-        balance = restaurant.balance
+        restaurant = Restaurant.objects.filter(pk=rest_id)
+        if not restaurant.exists():
+            return Response({'error': 'Restaurant not found'}, status=status.HTTP_404_NOT_FOUND)
+        balance = restaurant.first().balance
         return Response({f'total balance: {balance}'}, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
@@ -154,7 +156,6 @@ class BookingViewSet(viewsets.ViewSet):
         query_serializer = DateQuerySerializer(data=request.query_params)
         if not query_serializer.is_valid():
             return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
         parsed_date = query_serializer.validated_data['date']
         bookings = Booking.objects.filter(restaurants_id=rest_id, booked_time__date=parsed_date)
         serializer = BookingSerializer(bookings, many=True)
@@ -193,11 +194,12 @@ class BookingViewSet(viewsets.ViewSet):
         },
     )
     def cancel(self, request, rest_id, booking_id):
-        booking_exists = Booking.objects.filter(pk=booking_id, restaurant_id=rest_id).first()
-        if booking_exists is None:
+        booking_exists = Booking.objects.filter(pk=booking_id, restaurants_id=rest_id)
+        if not booking_exists.exists():
             return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
-        booking_exists.status = False
-        booking_exists.save(update_fields=['status'])
+        booking = booking_exists.first()
+        booking.status = False
+        booking.save(update_fields=['status'])
         return Response({'status': 'Booking cancelled'}, status=status.HTTP_200_OK)
 
 
