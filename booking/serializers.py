@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
 from authentication.models import User
-from .models import Booking, Occasion, OrderFreeTable, OrderFreeTime, OrderItems
+from .models import Booking, Occasion, OrderItems
 from restaurants.serializers import MenuSerializer
 
 
@@ -23,7 +23,7 @@ class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         fields = ['author', 'room', "restaurants", 'number_of_people', 'client_number', 'client_name', 'planed_from',
-                  'planed_to', ]
+                  'planed_to', "occasion"]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -43,15 +43,3 @@ class OccasionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Occasion
         fields = ['name', ]
-
-
-class OrderFreeTableSerializer(ModelSerializer):
-    class Meta:
-        model = OrderFreeTable
-        fields = '__all__'
-
-
-class OrderFreeTimeSerializer(ModelSerializer):
-    class Meta:
-        model = OrderFreeTime
-        fields = '__all__'

@@ -7,9 +7,8 @@ from rest_framework.permissions import AllowAny
 
 from authentication.models import User
 from restaurants.models import RestaurantMenu, RestaurantRoom, Restaurant
-from booking.models import Booking, Occasion, OrderFreeTable, OrderFreeTime, OrderItems
-from booking.serializers import BookingSerializer, OccasionSerializer, OrderFreeTableSerializer, \
-    OrderFreeTimeSerializer
+from booking.models import Booking, Occasion, OrderItems
+from booking.serializers import BookingSerializer, OccasionSerializer
 
 
 class BookingViewSet(ViewSet):
@@ -30,7 +29,7 @@ class BookingViewSet(ViewSet):
         data['restaurants'] = room.restaurant.id
         data['room'] = room.id
         data['author'] = User.objects.filter(id=request.data['author']).first().id
-
+        # is_free = Booking.objects.filter(room=room.id, )
         booking_serializer = BookingSerializer(data=data)
 
         if booking_serializer.is_valid():
@@ -63,9 +62,10 @@ class BookingActionsViewSet(ViewSet):
     )
     def detail_booking(self, request, pk):
         booking_detail = Booking.objects.filter(id=pk).first()
-        booking_serializer = BookingSerializer(booking_detail).data
-        return Response(data={'data': booking_serializer.data, 'message': f'{pk} id li buyurtma'},
-                        status=status.HTTP_200_OK)
+        booking_detail = BookingSerializer(booking_detail).data
+        return Response(
+            data={'data': booking_detail, 'message': f'{booking_detail['client_name']} {pk} id li buyurtmasi'},
+            status=status.HTTP_200_OK)
 
     def pay_booking(self, request, pk):
         booking_detail = Booking.objects.filter(id=pk).first()
@@ -108,22 +108,5 @@ class OccasionActionsViewSet(ViewSet):
         return Response(data={"message": "Your data doesn't found"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class FreeOrderViewSet(ViewSet):
-
-    def add_free_table(self, request):
-        if request.method == "POST":
-            obj = OrderFreeTable.objects.create(table_name=request.data['table_name'])
-            obj.save()
-            return Response(data={'message': 'Table successfully created'}, status=status.HTTP_201_CREATED)
-        table = OrderFreeTable.objects.all()
-        serializer_table = OrderFreeTableSerializer(table, many=True).data
-        return Response(data={'message': serializer_table}, status=status.HTTP_200_OK)
-
-    def ordered_times_view(self, request, pk):
-        if request.method == 'POST':
-            obj = OrderFreeTime.objects.create(table_id=pk, free_time=request.data['free_time'])
-            obj.save()
-            return Response(data={'message': 'You are successfully order table'}, status=status.HTTP_201_CREATED)
-        time = OrderFreeTime.objects.all()
-        serializer = OrderFreeTimeSerializer(time, many=True).data
-        return Response(data={'message': serializer}, status=status.HTTP_200_OK)
+def calculate_free_times(room_id):
+    room = RestaurantRoom.objects.filter(id=room_id).first()
