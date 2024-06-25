@@ -28,14 +28,7 @@ class BookingSerializer(serializers.ModelSerializer):
 class ManagerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Manager
-        fields = ['title', 'phone_number', 'date_of_birth', 'hire_date', 'fire_date']
-        read_only_fields = ['user']
-
-        def save(self, **kwargs):
-            user = self.context['request'].user
-            my_user = User.objects.get(user=user)
-            self.validated_data['user'] = my_user
-            return super().save(**kwargs)
+        fields = ['user', 'title', 'phone_number', 'date_of_birth', 'hire_date', 'fire_date']
 
 
 class EmployeeSerializer(serializers.ModelSerializer):
