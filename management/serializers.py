@@ -31,8 +31,6 @@ class ManagerSerializer(serializers.ModelSerializer):
         fields = ['user', 'title', 'phone_number', 'date_of_birth', 'hire_date', 'fire_date']
 
 
-
-
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
