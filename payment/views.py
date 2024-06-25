@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
 from payme.methods.generate_link import GeneratePayLink
+from booking.models import Booking
 
 
 class PaymeCallBackAPIView(MerchantAPIView):
@@ -15,7 +16,8 @@ class PaymeCallBackAPIView(MerchantAPIView):
         print(f"create_transaction for order_id: {order_id}, response: {action}")
         transaction = MerchantTransactionsModel.objects.filter(id=action['result']['transaction'])
         if transaction.exists():
-            order = PaymentHistory.objects.filter(id=order_id)
+            order_obj = Booking.objects.filter(id=order_id).first()
+            order = PaymentHistory.objects.filter(id=order_obj.id)
             order.status = PaymentHistory.Status.PENDING
             order.save(update_fields=['status'])
 
@@ -23,7 +25,8 @@ class PaymeCallBackAPIView(MerchantAPIView):
         print(f"perform_transaction for order_id: {order_id}, response: {action}")
         transaction = MerchantTransactionsModel.objects.filter(id=action['result']['transaction'])
         if transaction.exists():
-            order = PaymentHistory.objects.filter(id=order_id)
+            order_obj = Booking.objects.filter(id=order_id).first()
+            order = PaymentHistory.objects.filter(id=order_obj.id)
             order.status = PaymentHistory.Status.PAID
             order.save(update_fields=['status'])
 
@@ -31,12 +34,14 @@ class PaymeCallBackAPIView(MerchantAPIView):
         print(f"cancel_transaction for order_id: {order_id}, response: {action}")
         transaction = MerchantTransactionsModel.objects.filter(id=action['result']['transaction'])
         if transaction.exists():
-            order = PaymentHistory.objects.filter(id=order_id)
+            order_obj = Booking.objects.filter(id=order_id).first()
+            order = PaymentHistory.objects.filter(id=order_obj.id)
             order.status = PaymentHistory.Status.CANCELED
             order.save(update_fields=['status'])
 
 
 class OrderStatusApiView(CreateAPIView):
+
     queryset = PaymentHistory.objects.all()
     serializer_class = OrderSerializer
 
