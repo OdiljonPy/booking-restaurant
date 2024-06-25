@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import RestaurantViewSet, BookingViewSet, ManagementViewSet, EmployerViewSet
+from .views import RestaurantViewSet, BookingViewSet, ManagementViewSet, EmployerViewSet, UserViewSet
 
 urlpatterns = [
+    path('users/<int:user_id>/', UserViewSet.as_view({'delete': 'delete_user'})),
     path('restaurants/', RestaurantViewSet.as_view({
         'get': 'list_restaurants',
     }), name='restaurant-list'),

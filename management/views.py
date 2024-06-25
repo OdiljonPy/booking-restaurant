@@ -5,6 +5,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Sum
 from django.utils.dateparse import parse_date
+
+from authentication.models import User
 from restaurants.models import Restaurant
 from booking.models import Booking
 from .models import Role, Manager, Employee, PerformanceReview, Project, Task, LeaveRequest
@@ -13,6 +15,27 @@ from .serializers import RestaurantSerializer, BookingSerializer, ManagerSeriali
 from payment.models import PaymentWithHistory
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg import openapi
+
+
+class UserViewSet(viewsets.ViewSet):
+    @swagger_auto_schema(
+        operation_description="Delete User",
+        operation_summary="Delete User",
+        responses={
+            204: openapi.Response(
+                description='User deleted Successfully',
+            ),
+            404: openapi.Response(
+                description='User not found'
+            )
+        },
+    )
+    def delete_user(self, request, user_id):
+        user_exists = User.objects.filter(pk=user_id)
+        if not user_exists.exists():
+            return Response(data={'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        user_exists.first().delete()
+        return Response(data={'message': 'User deleted Successfully'}, status=status.HTTP_204_NO_CONTENT)
 
 
 class RestaurantViewSet(viewsets.ViewSet):
