@@ -1,9 +1,13 @@
 from django.db import models
 from authentication.models import User
+from .utils import name_validator, validate_uzb_number
+from management.models import Manager
 
 
 class RestaurantCategory(models.Model):
-    name = models.CharField(max_length=100)  # pan-asian, europe, usa, arabic, turkish, family
+    name = models.CharField(max_length=100,
+                            validators=[name_validator])  # pan-asian, europe, usa, arabic, turkish, family
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -23,11 +27,11 @@ class Restaurant(models.Model):
     booking_count_day_by_day = models.IntegerField(default=0)
 
     address = models.CharField(max_length=100, blank=True, null=True)
-    phone = models.CharField(max_length=12)
+    phone = models.CharField(max_length=13, validators=[validate_uzb_number])
     email = models.CharField(max_length=100, blank=True, null=True)
     # location = models.CharField(max_length=100)
 
-    category = models.ManyToManyField(RestaurantCategory)
+    category = models.ForeignKey(RestaurantCategory, on_delete=models.CASCADE)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -37,7 +41,7 @@ class Restaurant(models.Model):
 
 
 class RoomType(models.Model):
-    name = models.CharField(max_length=100)  # luxe, family, primary,
+    name = models.CharField(max_length=100, validators=[name_validator])  # luxe, family, primary,
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -48,7 +52,7 @@ class RoomType(models.Model):
 
 class RestaurantRoom(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, validators=[name_validator])
     description = models.TextField(blank=True, null=True)
     pictures = models.ImageField(upload_to='images/restaurants/room_images/',
                                  default='images/restaurants/room_images/default_room.jpg')  # default= need to add
@@ -64,7 +68,7 @@ class RestaurantRoom(models.Model):
 
 
 class MenuType(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, validators=[name_validator])
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -77,20 +81,7 @@ class RestaurantMenu(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     menu_type = models.ForeignKey(MenuType, on_delete=models.CASCADE)
 
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name
-
-
-class RestaurantMenuItem(models.Model):
-    restaurant_menu = models.ForeignKey(RestaurantMenu, on_delete=models.CASCADE)
-
-    name = models.CharField(max_length=300)
+    name = models.CharField(max_length=255, validators=[name_validator])
     description = models.TextField(blank=True, null=True)
     pictures = models.ImageField(upload_to='images/restaurants/menu_images/',
                                  default='images/restaurants/menu_images/default_menu.jpg', blank=True)
@@ -117,3 +108,15 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.comment
+
+
+class Rating(models.Model):
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    rate = models.FloatField(default=0.0, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.restaurant.name
+    
