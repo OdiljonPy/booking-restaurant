@@ -4,6 +4,8 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import permission_classes
+from .error_codes import ErrorCodes
+from .exception import CustomApiException
 
 from .models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom, RestaurantMenu, Comment, MenuType
 from .serializers import (CategorySerializer, RestaurantSerializer,
@@ -18,8 +20,6 @@ from difflib import SequenceMatcher
 
 # TODO: need to write filter for restaurant
 class RestaurantFilterViewSet(ViewSet):
-
-
 
     @swagger_auto_schema(
         operation_summary='Show restaurants',
@@ -269,6 +269,13 @@ class RestaurantRoomViewSet(ViewSet):
 
 class MenuTypeViewSet(ViewSet):
 
+    @swagger_auto_schema(
+        operation_summary='Create Menu Type',
+        operation_description='Create Restaurant Menu Type',
+        request_body=MenuTypeCreateSerializer(),
+        responses={201: 'Restaurant menu type successfully created', 400: 'Invalid request'},
+        tags=['Restaurant']
+    )
     def add_menu_type(self, request):
         menu_type = MenuType.objects.all()
         serializer = MenuTypeCreateSerializer(menu_type, many=True)
@@ -277,11 +284,24 @@ class MenuTypeViewSet(ViewSet):
             return Response(data={'result': serializer.data}, status=status.HTTP_201_CREATED)
         return Response(data={'result': 'Invalid serializer'}, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+        operation_summary='Show Menu Type',
+        operation_description='Show Restaurant menu type',
+        responses={200: RoomSerializer()},
+        tags=['Restaurant']
+    )
     def show_menu_type(self):
         meny_type = MenuType.objects.all()
         serializer = MenuTypeSerializer(meny_type, many=True).data
         return Response(data={'result': serializer}, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        operation_summary='Edit Menu type',
+        operation_description='Edit Restaurant Meny Type',
+        responses={200: MenuTypeSerializer(), 202: MenuTypeSerializer(), 400: 'Invalid request',
+                   404: 'Menu type does not exist'},
+        tags=['Restaurant']
+    )
     def edit_menu_type(self, request, pk):
         menu_type = MenuType.objects.filter(id=pk).first()
         serializer = MenuTypeSerializer(menu_type, data=request.data, partial=True)
@@ -290,12 +310,17 @@ class MenuTypeViewSet(ViewSet):
             return Response(data={'result': serializer.data}, status=status.HTTP_202_ACCEPTED)
         return Response(data={'result': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+        operation_summary='Delete Menu type',
+        operation_description='Delete Menu type',
+        responses={204: "Menu type successfully deleted"},
+        tags=['Restaurant']
+    )
     def delete_menu_type(self, request, pk):
         menu_type = MenuType.objects.filter(id=pk).first()
         message = f"{menu_type} type was deleted"
         menu_type.delete()
         return Response(data={'result': message}, status=status.HTTP_204_NO_CONTENT)
-
 
 
 class RestaurantMenuViewSet(ViewSet):
@@ -389,6 +414,3 @@ class CommentViewSet(ViewSet):
             serializer.save(user=self.request.user)
             return Response(data={"message": "Comment successfully added"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# def restaurant_rate_view(request):
-#     pass
