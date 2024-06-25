@@ -1,12 +1,11 @@
-from rest_framework import serializers
-from rest_framework.serializers import ModelSerializer, Serializer
-from .models import OTP
+from rest_framework.serializers import ModelSerializer
+from .models import PaymentHistory
 
 
-class OTPSerializer(Serializer):
-    otp_key = serializers.IntegerField()
-    otp_code = serializers.IntegerField()
+class OrderSerializer(ModelSerializer):
+    class Meta:
+        model = PaymentHistory
+        exclude = ['created_at', 'updated_at']
 
 
-class PanSerializer(Serializer):
-    pan = serializers.IntegerField()
+

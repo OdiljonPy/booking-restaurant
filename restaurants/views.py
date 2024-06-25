@@ -37,7 +37,6 @@ class RestaurantFilterViewSet(ViewSet):
         restaurant_serialize = RestaurantSerializer(restaurant_info, many=True).data
         return Response(data={"List of restaurants": restaurant_serialize}, status=status.HTTP_200_OK)
 
-
 # done
 class RestaurantCategoryViewSet(ViewSet):
     def create_category(self, request):

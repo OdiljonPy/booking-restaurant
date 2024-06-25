@@ -10,13 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os.path
+import environ
 from pathlib import Path
-
 from datetime import timedelta
+env = environ.Env(DEBUG=(bool, False))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -42,7 +43,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg',
-
+    'payme',
     # local apps
     'authentication',
     'booking',
@@ -186,3 +187,14 @@ SIMPLE_JWT = {
 TELEGRAM_API_URL = 'https://api.telegram.org/bot{}/sendMessage?text={}&chat_id={}'
 BOT_TOKEN = '6912718237:AAH2v2r4x2TuYnHqfpbi1ci43AxYKEiBWoE'
 CHANNEL_ID = '-1002048118873'
+
+PAYME: dict = {
+    'PAYME_ID': env('PAYME_ID'),
+    'PAYME_KEY': env('PAYME_KEY'),
+    'PAYME_URL': env('PAYME_URL'),
+    'PAYME_CALL_BACK_URL': env('PAYME_CALL_BACK_URL'),  # merchant api callback url
+    'PAYME_MIN_AMOUNT': env('PAYME_MIN_AMOUNT'),  # integer field
+    'PAYME_ACCOUNT': env('PAYME_ACCOUNT'),  # merchant account
+}
+
+ORDER_MODEL = 'payment.models.PaymentHistory'
