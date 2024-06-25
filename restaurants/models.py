@@ -4,7 +4,8 @@ from .utils import name_validator, validate_uzb_number
 
 
 class RestaurantCategory(models.Model):
-    name = models.CharField(max_length=100, validators=[name_validator])  # pan-asian, europe, usa, arabic, turkish, family
+    name = models.CharField(max_length=100,
+                            validators=[name_validator])  # pan-asian, europe, usa, arabic, turkish, family
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -106,3 +107,15 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.comment
+
+
+class Rating(models.Model):
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    rate = models.FloatField(default=0.0, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.restaurant.name
+    
