@@ -6,7 +6,7 @@ class TelegramUser(models.Model):
     user_id = models.IntegerField(default=0)
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
-    phone = models.CharField(max_length=12, validators=[validate_uz_number])
+    phone = models.CharField(max_length=14, validators=[validate_uz_number])
     username = models.CharField(max_length=50)
 
     created_at = models.DateTimeField(auto_now_add=True)

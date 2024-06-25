@@ -6,40 +6,46 @@ from restaurants.models import Restaurant, RestaurantCategory, RoomType, Restaur
 class TelegramUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = TelegramUser
-        fields = ['user_id', 'first_name', 'last_name', 'username']
+        fields = ['user_id', 'first_name', 'last_name', 'username', 'phone']
 
 
-class RestaurantSerializer(serializers.ModelSerializer):
+class AllRestaurantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Restaurant
-        fields = ['name', 'description', 'phone', 'email', 'address']
+        fields = ['id', 'name']
+
+
+class RestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Restaurant
+        fields = ['id', 'name', 'description', 'phone', 'email', 'address']
 
 
 class ResCategorySerializer(serializers.ModelSerializer):  # Restaurant Category  Serializer
     class Meta:
         model = RestaurantCategory
-        fields = ['name']
+        fields = ['id', 'name']
 
 
 class RoomsTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = RoomType
-        fields = ['name']
+        fields = ['id', 'name']
 
 
 class RestaurantRoomSerializer(serializers.ModelSerializer):
     class Meta:
         model = RestaurantRoom
-        fields = ['name', 'description', 'pictures']
+        fields = ['id', 'name', 'description', 'pictures']
 
 
 class MenuTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = MenuType
-        fields = ['name']
+        fields = ['id', 'name']
 
 
 class RestaurantMenuSerializer(serializers.ModelSerializer):
     class Meta:
         model = RestaurantMenu
-        fields = ['name', 'description']
+        fields = ['id', 'name', 'description']
