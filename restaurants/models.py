@@ -1,6 +1,7 @@
 from django.db import models
 from authentication.models import User
 from .utils import name_validator, validate_uzb_number
+from management.models import Manager
 
 
 class RestaurantCategory(models.Model):
@@ -15,6 +16,7 @@ class RestaurantCategory(models.Model):
 
 class Restaurant(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+    manager = models.ForeignKey(Manager, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     picture = models.ImageField(upload_to='images/restaurants/',
                                 default='images/restaurants/default_restaurant.jpg')  # default= need to add
