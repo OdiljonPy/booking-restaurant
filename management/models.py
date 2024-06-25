@@ -1,6 +1,6 @@
 from django.db import models
 
-from authentication.models import User
+from authentication.models import User, validate_uz_number
 from django.utils import timezone
 
 
@@ -18,7 +18,7 @@ class Role(models.Model):
 class Manager(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=15, blank=True)
+    phone_number = models.CharField(max_length=15, blank=True, validators=[validate_uz_number])
     date_of_birth = models.DateField(null=True, blank=True)
     hire_date = models.DateField(default=timezone.now)
     fire_date = models.DateField(null=True, blank=True)
@@ -34,7 +34,7 @@ class Employee(models.Model):
     manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True, related_name='employees')
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
     title = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=15, blank=True)
+    phone_number = models.CharField(max_length=15, blank=True, validators=[validate_uz_number])
     date_of_birth = models.DateField(null=True, blank=True)
     hire_date = models.DateField(default=timezone.now)
     created_at = models.DateTimeField(auto_now_add=True)

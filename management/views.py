@@ -1,3 +1,4 @@
+from datetime import datetime
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -7,7 +8,8 @@ from django.utils.dateparse import parse_date
 from restaurants.models import Restaurant
 from booking.models import Booking
 from .models import Role, Manager, Employee, PerformanceReview, Project, Task, LeaveRequest
-from .serializers import RestaurantSerializer, BookingSerializer, ManagerSerializer, EmployeeSerializer
+from .serializers import RestaurantSerializer, BookingSerializer, ManagerSerializer, EmployeeSerializer, \
+    DateRangeQuerySerializer, DateQuerySerializer
 from payment.models import PaymentWithHistory
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg import openapi
@@ -22,12 +24,6 @@ class RestaurantViewSet(viewsets.ViewSet):
         responses={
             200: openapi.Response(
                 description='List of all restaurants',
-                examples={
-                    'application/json': [
-                        {"id": 1, "name": "Restaurant 1"},
-                        {"id": 2, "name": "Restaurant 2"}
-                    ]
-                }
             )
         },
     )
@@ -42,29 +38,9 @@ class RestaurantViewSet(viewsets.ViewSet):
         responses={
             200: openapi.Response(
                 description='Restaurant detail',
-                examples={
-                    'application/json': {
-                        "id": 1,
-                        "author": "Author Name",
-                        "name": "Restaurant Name",
-                        "description": "Restaurant Description",
-                        "picture": "http://example.com/picture.jpg",
-                        "service_fee": 10.5,
-                        "balance": 1000.0,
-                        "booking_count_total": 25,
-                        "booking_count_day_by_day": 5,
-                        "address": "Olmazor distrit,BA IT Academy,Tashkent",
-                        "phone": "+123456789",
-                        "email": "restaurant@example.com",
-                        "category": "Category Name"
-                    }
-                }
             ),
             404: openapi.Response(
                 description='Restaurant not found',
-                examples={
-                    'application/json': {"error": "Restaurant not found"}
-                }
             )
         },
     )
@@ -81,30 +57,22 @@ class RestaurantViewSet(viewsets.ViewSet):
         responses={
             200: openapi.Response(
                 description="Restaurant balance",
-                examples={
-                    "application/json": {
-                        "total balance": 1234.56
-                    }
-                }
             ),
             404: openapi.Response(
                 description="Restaurant not found",
-                examples={
-                    "application/json": {
-                        "error": "Restaurant not found"
-                    }
-                }
             ),
         },
     )
     def balance(self, request, rest_id):
-        restaurant = Restaurant.objects.filter(pk=rest_id).first()
-        balance = restaurant.balance
+        restaurant = Restaurant.objects.filter(pk=rest_id)
+        if not restaurant.exists():
+            return Response({'error': 'Restaurant not found'}, status=status.HTTP_404_NOT_FOUND)
+        balance = restaurant.first().balance
         return Response({f'total balance: {balance}'}, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
-        operation_description="Show the full statistics of the restaurant from the start date to the end date",
-        operation_summary="Retrieve restaurant statistics",
+        operation_description="Get statistics of bookings based on date range",
+        operation_summary="Get booking statistics based on date range",
         manual_parameters=[
             openapi.Parameter(
                 'start_date',
@@ -123,49 +91,36 @@ class RestaurantViewSet(viewsets.ViewSet):
         ],
         responses={
             200: openapi.Response(
-                description="Restaurant statistics",
-                examples={
-                    "application/json": {
-                        "total_bookings": 50,
-                        "total_revenue": 10000.00
+                description='Booking statistics',
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'total_bookings': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        'total_revenue': openapi.Schema(type=openapi.TYPE_NUMBER, format=openapi.FORMAT_FLOAT)
                     }
-                }
+                )
             ),
             400: openapi.Response(
-                description="Invalid date formats or Start date cannot be after the end date",
-                examples={
-                    "application/json": {
-                        "error": "Invalid start date format"
-                    },
-                    "application/json": {
-                        "error": "Invalid end date format"
-                    },
-                    "application/json": {
-                        "error": "Start date cannot be after end date"
-                    }
-                }
-            ),
+                description='Invalid date format or date range'
+            )
         },
     )
     def statistics(self, request, rest_id):
-        start_date = request.query_params.get('start_date')
-        end_date = request.query_params.get('end_date')
-        parsed_start_date = parse_date(start_date)
-        parsed_end_date = parse_date(end_date)
-        if not start_date or not parsed_start_date:
-            return Response({'error': 'Invalid start date format'}, status=status.HTTP_400_BAD_REQUEST)
+        query_serializer = DateRangeQuerySerializer(data=request.query_params)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if not end_date or not parsed_end_date:
-            return Response({'error': 'Invalid end date format'}, status=status.HTTP_400_BAD_REQUEST)
+        parsed_start_date = query_serializer.validated_data['start_date']
+        parsed_end_date = query_serializer.validated_data['end_date']
 
-        if parse_date(start_date) > parse_date(end_date):
+        if parsed_start_date > parsed_end_date:
             return Response({'error': 'Start date cannot be after end date'}, status=status.HTTP_400_BAD_REQUEST)
 
         bookings = Booking.objects.filter(restaurants_id=rest_id,
                                           booked_time__date__range=[parsed_start_date, parsed_end_date])
         total_bookings = bookings.count()
-        total_revenue = bookings.aggregate(
-            total=Sum('total_sum'))['total'] or 0
+        total_revenue = bookings.aggregate(total=Sum('total_sum'))['total'] or 0
+
         stats = {
             'total_bookings': total_bookings,
             'total_revenue': total_revenue,
@@ -174,72 +129,55 @@ class RestaurantViewSet(viewsets.ViewSet):
 
 
 class BookingViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
-
+    # permission_classes = [IsAuthenticated]
     @swagger_auto_schema(
-        operation_description="List all bookings of the restaurant",
-        operation_summary="Get all bookings",
-        responses={
-            200: openapi.Response(
-                description='List of all bookings',
-                examples={
-                    'application/json': [
-                        {"id": 1, "restaurant_id": 1, "booked_time": "2024-06-23T10:00:00Z", "status": True},
-                        {"id": 2, "restaurant_id": 1, "booked_time": "2024-06-24T10:00:00Z", "status": False}
-                    ]
-                }
-            )
-        },
-    )
-    def list(self, request, rest_id):
-        bookings = Booking.objects.filter(restaurants_id=rest_id)
-        serializer = BookingSerializer(bookings, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @swagger_auto_schema(
-        operation_description="Retrieve info about booking status",
-        operation_summary="Get booking details",
+        operation_description="List bookings based on date",
+        operation_summary="Get all bookings based on date",
         manual_parameters=[
             openapi.Parameter(
                 'date',
                 openapi.IN_QUERY,
                 description="Date in YYYY-MM-DD format",
-                type=openapi.TYPE_STRING
+                type=openapi.TYPE_STRING,
+                required=True
             )
         ],
         responses={
             200: openapi.Response(
-                description='Booking detail',
-                examples={
-                    'application/json': [
-                        {"id": 1, "restaurant_id": 1, "booked_time": "2024-06-23T10:00:00Z", "status": True}
-                    ]
-                }
+                description='List of all bookings',
+                schema=BookingSerializer(many=True)
             ),
             400: openapi.Response(
-                description='Invalid date format',
-                examples={
-                    'application/json': {"error": "Invalid date format"}
-                }
+                description='"Date has wrong format. Use one of these formats instead: YYYY-MM-DD."'
+            )
+        },
+    )
+    def list(self, request, rest_id):
+        query_serializer = DateQuerySerializer(data=request.query_params)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        parsed_date = query_serializer.validated_data['date']
+        bookings = Booking.objects.filter(restaurants_id=rest_id, booked_time__date=parsed_date)
+        serializer = BookingSerializer(bookings, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_description="Retrieve a booking detail",
+        operation_summary="Get booking details",
+        responses={
+            200: openapi.Response(
+                description='Booking detail',
             ),
             404: openapi.Response(
                 description='Booking not found',
-                examples={
-                    'application/json': {"error": "Booking not found"}
-                }
             ),
         },
     )
     def retrieve(self, request, rest_id, booking_id):
-        date = request.query_params.get('date')
         booking_exists = Booking.objects.filter(pk=booking_id, restaurants_id=rest_id)
         if not booking_exists.exists():
             return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
         bookings = booking_exists
-        if date and not parse_date(date):
-            return Response({'error': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
-        if date:
-            bookings = Booking.objects.filter(booked_time__date=date)
         serializer = BookingSerializer(bookings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -249,29 +187,24 @@ class BookingViewSet(viewsets.ViewSet):
         responses={
             200: openapi.Response(
                 description='Booking cancelled',
-                examples={
-                    'application/json': {"status": "Booking cancelled"}
-                }
             ),
             404: openapi.Response(
                 description='Booking not found',
-                examples={
-                    'application/json': {"error": "Booking not found"}
-                }
             )
         },
     )
     def cancel(self, request, rest_id, booking_id):
-        booking_exists = Booking.objects.filter(pk=booking_id, restaurant_id=rest_id).first()
-        if booking_exists is None:
+        booking_exists = Booking.objects.filter(pk=booking_id, restaurants_id=rest_id)
+        if not booking_exists.exists():
             return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
-        booking_exists.status = False
-        booking_exists.save(update_fields=['status'])
+        booking = booking_exists.first()
+        booking.status = False
+        booking.save(update_fields=['status'])
         return Response({'status': 'Booking cancelled'}, status=status.HTTP_200_OK)
 
 
 class ManagementViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         operation_description="Create a new manager for the restaurant",
@@ -280,15 +213,9 @@ class ManagementViewSet(viewsets.ViewSet):
         responses={
             201: openapi.Response(
                 description='Manager Added Successfully',
-                examples={
-                    'application/json': {"message": "Manager Added Successfully", "status": status.HTTP_201_CREATED}
-                }
             ),
             400: openapi.Response(
                 description='Invalid data',
-                examples={
-                    'application/json': {"message": "Invalid data", "status": status.HTTP_400_BAD_REQUEST}
-                }
             )
         },
     )
@@ -305,12 +232,6 @@ class ManagementViewSet(viewsets.ViewSet):
         responses={
             200: openapi.Response(
                 description='List of all managers',
-                examples={
-                    'application/json': [
-                        {"id": 1, "name": "Manager 1"},
-                        {"id": 2, "name": "Manager 2"}
-                    ]
-                }
             )
         },
     )
@@ -321,7 +242,7 @@ class ManagementViewSet(viewsets.ViewSet):
 
 
 class EmployerViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         operation_description="Create a new employee",
@@ -330,15 +251,9 @@ class EmployerViewSet(viewsets.ViewSet):
         responses={
             201: openapi.Response(
                 description='Employee added Successfully',
-                examples={
-                    'application/json': {"message": "Employee Added Successfully", "status": status.HTTP_201_CREATED}
-                }
             ),
             400: openapi.Response(
                 description='Invalid data',
-                examples={
-                    'application/json': {"message": "Invalid data", "status": status.HTTP_400_BAD_REQUEST}
-                }
             )
         },
     )
@@ -355,12 +270,6 @@ class EmployerViewSet(viewsets.ViewSet):
         responses={
             200: openapi.Response(
                 description='List of all employees',
-                examples={
-                    'application/json': [
-                        {"id": 1, "name": "Employee 1"},
-                        {"id": 2, "name": "Employee 2"}
-                    ]
-                }
             )
         },
     )

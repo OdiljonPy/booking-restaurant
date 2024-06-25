@@ -6,14 +6,13 @@ from authentication.models import User
 
 
 class RestaurantSerializer(serializers.ModelSerializer):
-    class RestaurantSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = Restaurant
-            fields = [
-                'id', 'author', 'name', 'picture', 'description',
-                'service_fee', 'booking_count_total', 'booking_count_day_by_day',
-                'address', 'phone', 'email', 'category', 'created_at', 'updated_at'
-            ]
+    class Meta:
+        model = Restaurant
+        fields = [
+            'id', 'author', 'name', 'picture', 'description',
+            'service_fee', 'booking_count_total', 'booking_count_day_by_day',
+            'address', 'phone', 'email', 'category', 'created_at', 'updated_at'
+        ]
 
 
 class BookingSerializer(serializers.ModelSerializer):
@@ -21,7 +20,7 @@ class BookingSerializer(serializers.ModelSerializer):
         model = Booking
         fields = [
             'id', 'author', 'restaurants', 'room', 'number_of_people', 'contact_number',
-            'contact_username', 'comment','occasion', 'status', 'paying_status',
+            'contact_username', 'comment', 'occasion', 'status', 'paying_status',
             'booked_time', 'planed_time'
         ]
 
@@ -43,3 +42,12 @@ class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = '__all__'
+
+
+class DateQuerySerializer(serializers.Serializer):
+    date = serializers.DateField(format='%Y-%m-%d', input_formats=['%Y-%m-%d'], required=True)
+
+
+class DateRangeQuerySerializer(serializers.Serializer):
+    start_date = serializers.DateField(format='%Y-%m-%d', input_formats=['%Y-%m-%d'], required=True)
+    end_date = serializers.DateField(format='%Y-%m-%d', input_formats=['%Y-%m-%d'], required=True)
