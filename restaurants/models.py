@@ -3,6 +3,7 @@ from authentication.models import User
 from .utils import name_validator, validate_uzb_number
 
 
+
 class RestaurantCategory(models.Model):
     name = models.CharField(max_length=100,
                             validators=[name_validator], unique=True)  # pan-asian, europe, usa, arabic, turkish, family
@@ -21,6 +22,7 @@ class Restaurant(models.Model):
     description = models.TextField(blank=True, null=True)
     service_fee = models.FloatField(default=0.0)
     balance = models.FloatField(default=0.0)
+
 
     booking_count_total = models.IntegerField(default=0)
     booking_count_day_by_day = models.IntegerField(default=0)
