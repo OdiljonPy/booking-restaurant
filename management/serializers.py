@@ -8,21 +8,13 @@ from authentication.models import User
 class RestaurantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Restaurant
-        fields = [
-            'id', 'author', 'name', 'picture', 'description',
-            'service_fee', 'booking_count_total', 'booking_count_day_by_day',
-            'address', 'phone', 'email', 'category', 'created_at', 'updated_at'
-        ]
+        fields = '__all__'
 
 
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
-        fields = [
-            'id', 'author', 'restaurants', 'room', 'number_of_people', 'contact_number',
-            'contact_username', 'comment', 'occasion', 'status', 'paying_status',
-            'booked_time', 'planed_time'
-        ]
+        fields = '__all__'
 
 
 class ManagerSerializer(serializers.ModelSerializer):
