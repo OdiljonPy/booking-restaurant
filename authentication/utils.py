@@ -1,7 +1,8 @@
 import random
 from django.conf import settings
 import requests
-from django.core.exceptions import ValidationError
+from .exceptions import BadRequestException
+
 
 def generate_otp_code():
     return random.randint(10000, 99999)
@@ -19,4 +20,4 @@ def send_otp(otp):
 
     status = requests.get(settings.TELEGRAM_API_URL.format(settings.BOT_TOKEN, message, settings.CHANNEL_ID))
     if status.status_code != 200:
-        raise ValidationError("Texnik sabablarga ko'ra ko'd yuborilmadi, Iltimos keyinroq urinib ko'ring!")
+        raise BadRequestException("Texnik sabablarga ko'ra ko'd yuborilmadi, Iltimos keyinroq urinib ko'ring!")
