@@ -28,7 +28,7 @@ urlpatterns = [
     path('<int:pk>/menu/',
          RestaurantMenuViewSet.as_view({'get': 'show_menu_detail', 'patch': 'edit_menu', 'delete': 'delete_menu'})),
 
-    path('comment/', CommentViewSet.as_view({'post': 'create'})),
-    path('<int:restaurant_id>/comments/', CommentViewSet.as_view({'get': 'list'})),
+    path('comment/', CommentViewSet.as_view({'post': 'comment_create'})),
+    path('<int:pk>/comment/', CommentViewSet.as_view({'get': 'comment_list'})),
 
 ]

@@ -3,7 +3,6 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from .models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom, RestaurantMenu, Comment, MenuType
@@ -11,22 +10,29 @@ from .serializers import (CategorySerializer, RestaurantSerializer,
                           RoomSerializer, RoomTypeSerializer, MenuSerializer, CommentSerializer,
                           RestaurantCreateSerializer, RoomCreateSerializer, MenuCreateSerializer,
                           CategoryCreateSerializer, RoomTypeCreateSerializer, MenuTypeCreateSerializer,
-                          MenuTypeSerializer)
+                          MenuTypeSerializer, CommentCreateSerializer)
 
 
-# TODO: need to write filter for restaurant
+# TODO: need to write filter for restaurant and change comment api
 class RestaurantFilterViewSet(ViewSet):
+    def filter_restaurant(self, reqeust):
+        data = reqeust.GET
+        query = data.get['query']
+        restaurant = Restaurant.objects.filter(name__icontains=reqeust.name)
 
     @swagger_auto_schema(
         operation_summary='Show restaurants',
         operation_description='Show restaurants list',
-        responses={200: CategorySerializer()},
+        responses={200: RestaurantSerializer()},
         tags=['Restaurant']
     )
     def show_restaurant(self, request):
-        restaurant_info = Restaurant.objects.all()
-        restaurant_serialize = RestaurantSerializer(restaurant_info, many=True).data
-        return Response(data={"List of restaurants": restaurant_serialize}, status=status.HTTP_200_OK)
+        if request.user.is_authenticated:
+            restaurant_info = Restaurant.objects.all()
+            restaurant_serialize = RestaurantSerializer(restaurant_info, many=True).data
+            return Response(data={'result': restaurant_serialize}, status=status.HTTP_200_OK)
+        return Response(data={'result': 'Authentication credentials does not provided'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class RestaurantCategoryViewSet(ViewSet):
@@ -38,13 +44,13 @@ class RestaurantCategoryViewSet(ViewSet):
         responses={201: CategoryCreateSerializer()},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
     def create_category(self, request):
         category_serializer = CategoryCreateSerializer(data=request.data)
-        if category_serializer.is_valid():
+        if request.user.is_authenticated and category_serializer.is_valid():
             category_serializer.save()
-            return Response(data={"result": "Category added successfully"}, status=status.HTTP_201_CREATED)
-        return Response(data={"result": "please add the category name"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={"result": "Category created successfully"}, status=status.HTTP_201_CREATED)
+        return Response(data={"result": "Authentication credentials does not provided or Invalid request"},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Show categories',
@@ -52,11 +58,12 @@ class RestaurantCategoryViewSet(ViewSet):
         responses={200: CategorySerializer()},
         tags=['Restaurant']
     )
-    @permission_classes([AllowAny])
     def restaurant_category(self, request):
         category = RestaurantCategory.objects.all()
         category_serialize = CategorySerializer(category, many=True).data
-        return Response(data={"result": category_serialize}, status=status.HTTP_200_OK)
+        if category_serialize.is_valid():
+            return Response(data={"result": category_serialize}, status=status.HTTP_200_OK)
+        return Response(data={'result': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Delete Category',
@@ -64,18 +71,17 @@ class RestaurantCategoryViewSet(ViewSet):
         responses={204: 'Category successfully deleted'},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
     def delete_category(self, request, pk):
         category = RestaurantCategory.objects.filter(pk=pk).first()
-        if category:
+        if category and request.user.is_authenticated:
             message = f"{category} was deleted successfully"
             category.delete()
             return Response(data={"result": message}, status=status.HTTP_204_NO_CONTENT)
-        return Response(data={"result": "Category doesn't find"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(data={"result": "Category doesn't exist or authentication credentials does not provided"},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class RestaurantViewSet(ViewSet):
-
     @swagger_auto_schema(
         operation_summary='Create Restaurant',
         operation_description='Create Restaurant',
@@ -83,25 +89,28 @@ class RestaurantViewSet(ViewSet):
         responses={201: 'Restaurant successfully created'},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
     def add_restaurant(self, request):
         restaurant_obj = RestaurantCreateSerializer(data=request.data)
-        if restaurant_obj.is_valid():
+        if request.user.is_authenticated and restaurant_obj.is_valid():
             restaurant_obj.save()
             return Response(data={'result': restaurant_obj.data}, status=status.HTTP_201_CREATED)
-        return Response(data={'result': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'result': 'Authentication credentials does not provided or Invalid request'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Show Restaurant',
         operation_description='Show Restaurant Info',
-        responses={200: RestaurantSerializer()},
+        responses={200: RestaurantSerializer(), 400: 'Bad request'},
         tags=['Restaurant']
     )
-    @permission_classes([AllowAny])
     def show_restaurant_detail(self, request, pk):
+        restaurant = Restaurant.objects.all()
         restaurant_detail = Restaurant.objects.filter(id=pk).first()
-        restaurant_serialize = RestaurantSerializer(data=restaurant_detail).data
-        return Response(data={"restaurant_detail": restaurant_serialize}, status=status.HTTP_200_OK)
+        restaurant_serialize = RestaurantSerializer(data=restaurant_detail)
+        print(restaurant)
+        if restaurant_serialize.is_valid():
+            return Response(data={'result': restaurant_serialize.data}, status=status.HTTP_200_OK)
+        return Response(data={"result": 'Invalid serializer'}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Edit Restaurant',
@@ -110,14 +119,14 @@ class RestaurantViewSet(ViewSet):
                    404: 'Restaurant does not exist'},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
     def edit_restaurant(self, request, pk):
         obj = Restaurant.objects.filter(id=pk).first()
         serializer = RestaurantSerializer(obj, data=request.data, partial=True)
-        if serializer.is_valid():
+        if request.user.is_authenticated and serializer.is_valid():
             serializer.save()
             return Response(data={"result": serializer.data}, status=status.HTTP_202_ACCEPTED)
-        return Response(data={"result": "Data doesn't found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(data={"result": "Authentication credentials does not provided or data doesn't find"},
+                        status=status.HTTP_404_NOT_FOUND)
 
     @swagger_auto_schema(
         operation_summary='Delete Restaurant',
@@ -125,12 +134,14 @@ class RestaurantViewSet(ViewSet):
         responses={204: "Restaurant successfully deleted"},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
     def delete_restaurant(self, request, pk):
         restaurant = Restaurant.objects.filter(id=pk).first()
-        message = f"{restaurant.restaurant_name} was deleted"
-        restaurant.delete()
-        return Response(data={"message": message}, status=status.HTTP_204_NO_CONTENT)
+        if restaurant and request.user.is_authenticated:
+            message = f"{restaurant.restaurant_name} was deleted"
+            restaurant.delete()
+            return Response(data={"message": message}, status=status.HTTP_204_NO_CONTENT)
+        return Response(data={'result': 'Authentication credentials does not provided or restaurant does not exist'},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class RoomTypeViewSet(ViewSet):
@@ -142,13 +153,13 @@ class RoomTypeViewSet(ViewSet):
         responses={201: 'Restaurant successfully created'},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
     def add_room_type(self, request):
         room_type = RoomTypeCreateSerializer(data=request.data)
-        if room_type.is_valid():
+        if request.user.is_authenticated and room_type.is_valid():
             room_type.save()
             return Response(data={'result': room_type.data}, status=status.HTTP_201_CREATED)
-        return Response(data={'result': 'Invalid serializer'}, status=status.HTTP_201_CREATED)
+        return Response(data={'result': 'Authentication credentials does not provided or invalid serializer'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Show Room Type',
@@ -156,11 +167,12 @@ class RoomTypeViewSet(ViewSet):
         responses={200: RoomTypeSerializer()},
         tags=['Restaurant']
     )
-    @permission_classes([AllowAny])
     def show_room_type(self, request):
         room_type = RoomType.objects.all()
-        room_type_serialize = RoomTypeSerializer(room_type, many=True).data
-        return Response(data={"result": room_type_serialize}, status=status.HTTP_200_OK)
+        room_type_serialize = RoomTypeSerializer(room_type, many=True)
+        if room_type_serialize.is_valid():
+            return Response(data={'result': room_type_serialize.data}, status=status.HTTP_200_OK)
+        return Response(data={"result": 'Invalid serializer'}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Edit Room Type',
@@ -169,14 +181,14 @@ class RoomTypeViewSet(ViewSet):
                    404: 'Room type does not exist'},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
     def edit_room_type(self, request, pk):
         obj = RoomType.objects.filter(id=pk).first()
         serializer_type = RoomTypeSerializer(obj, data=request.data, partial=True)
-        if serializer_type.is_valid():
+        if request.user.is_authenticated and serializer_type.is_valid():
             serializer_type.save()
             return Response(data={'result': serializer_type.data}, status=status.HTTP_202_ACCEPTED)
-        return Response(data={'result': 'Serializer is invalid'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'result': 'Authentication credentials does not provided or invalid request'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Delete Room Type',
@@ -184,12 +196,14 @@ class RoomTypeViewSet(ViewSet):
         responses={204: "Room type successfully deleted"},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
     def delete_room_type(self, request, pk):
         room_type = RoomType.objects.filter(id=pk).first()
-        message = f"{room_type} type was deleted"
-        room_type.delete()
-        return Response(data={"message": message}, status=status.HTTP_204_NO_CONTENT)
+        if room_type and request.user.is_authenticated:
+            message = f"{room_type} type was deleted"
+            room_type.delete()
+            return Response(data={"message": message}, status=status.HTTP_204_NO_CONTENT)
+        return Response(data={'result': 'Authentication credentials does not provided or invalid serializer'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class RestaurantRoomViewSet(ViewSet):
@@ -201,13 +215,13 @@ class RestaurantRoomViewSet(ViewSet):
         responses={201: 'Restaurant room successfully created'},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
-    def add_room(self, request, pk):
+    def add_room(self, request):
         room = RoomCreateSerializer(data=request.data)
-        if room.is_valid():
+        if request.user.is_authenticated and room.is_valid():
             room.save()
             return Response(data={"result": room.data}, status=status.HTTP_201_CREATED)
-        return Response(data={'result': 'Invalid serializer'}, status=status.HTTP_201_CREATED)
+        return Response(data={'result': 'Authentication credentials does not provided or invalid serializer'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Show Restaurant',
@@ -215,11 +229,12 @@ class RestaurantRoomViewSet(ViewSet):
         responses={200: RoomSerializer()},
         tags=['Restaurant']
     )
-    @permission_classes([AllowAny])
     def show_restaurant_room(self, request, pk):
         room = RestaurantRoom.objects.filter(restaurant_id=pk)
-        room_serialize = RoomSerializer(room, many=True).data
-        return Response(data={"list of rooms": room_serialize}, status=status.HTTP_200_OK)
+        room_serialize = RoomSerializer(room, many=True)
+        if room_serialize.is_valid():
+            return Response(data={'result': room_serialize.data}, status=status.HTTP_200_OK)
+        return Response(data={"result": 'Invalid serializer'}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Show Room',
@@ -227,11 +242,12 @@ class RestaurantRoomViewSet(ViewSet):
         responses={200: RoomSerializer()},
         tags=['Restaurant']
     )
-    @permission_classes([AllowAny])
     def show_room_detail(self, request, pk):
         room = RestaurantRoom.objects.filter(restaurant_id=pk).first()
-        room_serialize = RoomSerializer(room, many=True).data
-        return Response(data={"room_details": room_serialize}, status=status.HTTP_200_OK)
+        room_serialize = RoomSerializer(room, many=True)
+        if room_serialize.is_valid():
+            return Response(data={"room_details": room_serialize.data}, status=status.HTTP_200_OK)
+        return Response(data={"result": 'Invalid serializer'}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Edit Room',
@@ -240,14 +256,14 @@ class RestaurantRoomViewSet(ViewSet):
                    404: 'Room type does not exist'},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
     def edit_room(self, request, pk):
         obj = RestaurantRoom.objects.filter(id=pk).first()
         serializer_room = RoomSerializer(obj, data=request.data, partial=True)
-        if serializer_room.is_valid():
+        if request.user.is_authenticated and serializer_room.is_valid():
             serializer_room.save()
-            return Response(data={'message': serializer_room.data}, status=status.HTTP_202_ACCEPTED)
-        return Response(data={'message': 'Serializer is invalid'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'result': serializer_room.data}, status=status.HTTP_202_ACCEPTED)
+        return Response(data={'result': 'Authentication credentials does not provided or invalid request'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Delete Room',
@@ -255,12 +271,14 @@ class RestaurantRoomViewSet(ViewSet):
         responses={204: "Room successfully deleted"},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
     def delete_room(self, request, pk):
         room = RestaurantRoom.objects.filter(id=pk).first()
-        message = f"{room} was deleted"
-        del room
-        return Response(data={"message": message}, status=status.HTTP_200_OK)
+        if room and request.user.is_authenticated:
+            message = f"{room} was deleted"
+            del room
+            return Response(data={"result": message}, status=status.HTTP_200_OK)
+        return Response(data={'result': 'Authentication credentials does not provided or invalid serializer'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class MenuTypeViewSet(ViewSet):
@@ -275,10 +293,11 @@ class MenuTypeViewSet(ViewSet):
     def add_menu_type(self, request):
         menu_type = MenuType.objects.all()
         serializer = MenuTypeCreateSerializer(menu_type, many=True)
-        if serializer.is_valid():
+        if request.user.is_authenticated and serializer.is_valid():
             serializer.save()
             return Response(data={'result': serializer.data}, status=status.HTTP_201_CREATED)
-        return Response(data={'result': 'Invalid serializer'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'result': 'Authentication credentials does not provided or invalid serializer'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Show Menu Type',
@@ -288,8 +307,10 @@ class MenuTypeViewSet(ViewSet):
     )
     def show_menu_type(self):
         meny_type = MenuType.objects.all()
-        serializer = MenuTypeSerializer(meny_type, many=True).data
-        return Response(data={'result': serializer}, status=status.HTTP_200_OK)
+        serializer = MenuTypeSerializer(meny_type, many=True)
+        if serializer.is_valid():
+            return Response(data={'result': serializer.data}, status=status.HTTP_200_OK)
+        return Response(data={'result': 'Invalid serializer'}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Edit Menu type',
@@ -301,10 +322,11 @@ class MenuTypeViewSet(ViewSet):
     def edit_menu_type(self, request, pk):
         menu_type = MenuType.objects.filter(id=pk).first()
         serializer = MenuTypeSerializer(menu_type, data=request.data, partial=True)
-        if serializer.is_valid():
+        if request.user.is_authenticated and serializer.is_valid():
             serializer.save()
             return Response(data={'result': serializer.data}, status=status.HTTP_202_ACCEPTED)
-        return Response(data={'result': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'result': 'Authentication credentials does not provided or invalid request'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Delete Menu type',
@@ -314,9 +336,12 @@ class MenuTypeViewSet(ViewSet):
     )
     def delete_menu_type(self, request, pk):
         menu_type = MenuType.objects.filter(id=pk).first()
-        message = f"{menu_type} type was deleted"
-        menu_type.delete()
-        return Response(data={'result': message}, status=status.HTTP_204_NO_CONTENT)
+        if menu_type and request.user.is_authenticated:
+            message = f"{menu_type} type was deleted"
+            menu_type.delete()
+            return Response(data={'result': message}, status=status.HTTP_204_NO_CONTENT)
+        return Response(data={'result': 'Authentication credentials does not provided or invalid serializer'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class RestaurantMenuViewSet(ViewSet):
@@ -327,11 +352,12 @@ class RestaurantMenuViewSet(ViewSet):
         responses={200: MenuSerializer()},
         tags=['Restaurant']
     )
-    @permission_classes([AllowAny])
     def show_restaurant_menu(self, request):
         menu = RestaurantMenu.objects.filter(restaurant_id=request.data['restaurant_id'])
-        menu_serialize = MenuSerializer(menu, many=True).data
-        return Response(data={"result": menu_serialize}, status=status.HTTP_200_OK)
+        menu_serialize = MenuSerializer(menu, many=True)
+        if menu_serialize.is_valid():
+            return Response(data={"result": menu_serialize.data}, status=status.HTTP_200_OK)
+        return Response(data={"result": 'Invalid serializer'}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Create Menu',
@@ -340,13 +366,13 @@ class RestaurantMenuViewSet(ViewSet):
         responses={201: 'Restaurant menu successfully created'},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
     def add_restaurant_menu(self, request):
         menu = MenuCreateSerializer(data=request.data)
-        if menu.is_valid():
+        if request.user.is_authenticated and menu.is_valid():
             menu.save()
             return Response(data={"result": menu.data}, status=status.HTTP_201_CREATED)
-        return Response(data={"result": 'Serializer is invalid'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={"result": 'Authentication credentials does not provided or invalid request'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Show Menu detail',
@@ -354,11 +380,12 @@ class RestaurantMenuViewSet(ViewSet):
         responses={200: MenuSerializer()},
         tags=['Restaurant']
     )
-    @permission_classes([AllowAny])
     def show_menu_detail(self, request, pk):
         menu = RestaurantMenu.objects.filter(id=pk).first()
-        menu_serialize = MenuSerializer(menu, many=True).data
-        return Response(data={"result": menu_serialize}, status=status.HTTP_200_OK)
+        menu_serialize = MenuSerializer(menu, many=True)
+        if menu_serialize.is_valid():
+            return Response(data={"result": menu_serialize.data}, status=status.HTTP_200_OK)
+        return Response(data={'result': 'Invalid serializer'}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Edit Menu',
@@ -367,14 +394,14 @@ class RestaurantMenuViewSet(ViewSet):
                    404: 'Menu does not exist'},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
     def edit_menu(self, request, pk):
         obj = RestaurantMenu.objects.filter(id=pk).first()
         serializer_menu = MenuSerializer(obj, data=request.data, partial=True)
-        if serializer_menu.is_valid():
+        if request.user.is_authenticated and serializer_menu.is_valid():
             serializer_menu.save()
             return Response(data={'result': serializer_menu.data}, status=status.HTTP_202_ACCEPTED)
-        return Response(data={'result': 'Serializer is invalid'})
+        return Response(data={'result': 'Authentication credentials does not provided or invalid serializer'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Delete Menu',
@@ -382,31 +409,41 @@ class RestaurantMenuViewSet(ViewSet):
         responses={204: "Menu successfully deleted"},
         tags=['Restaurant']
     )
-    @permission_classes([IsAuthenticated])
     def delete_menu(self, request, pk):
         menu = RestaurantMenu.objects.filter(id=pk).first()
-        message = f"{menu.name} is deleted"
-        del menu
-        return Response(data={"message": message}, status=status.HTTP_200_OK)
+        if menu and request.user.is_authenticated:
+            message = f"{menu.name} is deleted"
+            del menu
+            return Response(data={"result": message}, status=status.HTTP_204_NO_CONTENT)
+        return Response(data={'result': 'Authentication credentials does not provided or invalid serializer'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class CommentViewSet(ViewSet):
-    permission_classes = [IsAuthenticated]
-
     @swagger_auto_schema(
         operation_summary='Show Comment list',
         operation_description='Show Restaurant Comment list',
-        responses={200: CommentSerializer()},
+        responses={200: CommentSerializer(), 400: 'Invalid request'},
         tags=['Restaurant']
     )
-    def comment_list(self, request, restaurant_id):
-        comments = Comment.objects.filter(restaurant_id=restaurant_id)
+    def comment_list(self, request, pk):
+        comments = Comment.objects.filter(restaurant_id=pk)
         serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def comment_create(self, request):
-        serializer = CommentSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(user=self.request.user)
-            return Response(data={"message": "Comment successfully added"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'result': serializer.data}, status=status.HTTP_200_OK)
+        return Response(data={'result': 'Invalid serializer'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
+        operation_summary='Create Comment',
+        operation_description='Create Restaurant Comment',
+        request_body=CommentCreateSerializer(),
+        responses={200: CommentSerializer(), 201: CommentSerializer(), 400: 'Invalid request'},
+        tags=['Restaurant']
+    )
+    def comment_create(self, request):
+        serializer = CommentCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data={"result": CommentSerializer().data}, status=status.HTTP_201_CREATED)
+        return Response(data={'result': f'Authentication credentials does not provided or {serializer.errors}'},
+                        status=status.HTTP_400_BAD_REQUEST)
