@@ -2,6 +2,7 @@ from django.db import models
 from authentication.models import User
 
 
+
 class RestaurantCategory(models.Model):
     name = models.CharField(max_length=100)  # pan-asian, europe, usa, arabic, turkish, family
     created_at = models.DateTimeField(auto_now_add=True)
@@ -18,6 +19,7 @@ class Restaurant(models.Model):
     description = models.TextField(blank=True, null=True)
     service_fee = models.FloatField(default=0.0)
     balance = models.FloatField(default=0.0)
+
 
     booking_count_total = models.IntegerField(default=0)
     booking_count_day_by_day = models.IntegerField(default=0)
