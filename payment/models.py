@@ -9,15 +9,8 @@ from ..restaurants.models import Restaurant
 from ..booking.models import Booking
 """
 
-FAILED, PAYED, RETURNED = ('failed', 'payed', 'returned')
+FAILED, PAYED, RETURNED, DO_NOT_PAYED_YET = ('failed', 'payed', 'returned', 'do_not_payed_yet')
 
-
-class BaseModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
 
 """
 class Card(models.Model, BaseModel):
@@ -40,17 +33,22 @@ class OTP(models.Model, BaseModel):
 """
 
 
-class PaymentWithHistory(models.Model, BaseModel):
+class PaymentWithHistory(models.Model):
     STATUS_CHOICES = (
-        (1, PAYED),
-        (2, FAILED),
-        (3, RETURNED)
+        ('1', DO_NOT_PAYED_YET),
+        ('2', PAYED),
+        ('3', FAILED),
+        ('4', RETURNED)
     )
     booking = models.ForeignKey('booking.Booking', on_delete=models.CASCADE)
     user = models.ForeignKey('authentication.User', on_delete=models.CASCADE)
     pan = models.CharField(max_length=16, validators=[is_valid_pan])
     expire_month = models.CharField(max_length=2, validators=[is_valid_month])
-    status = models.CharField(max_length=21, choices=STATUS_CHOICES)
+    amount = models.FloatField()
+    status = models.CharField(max_length=21, choices=STATUS_CHOICES, default=1)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return str(self.user.username)
