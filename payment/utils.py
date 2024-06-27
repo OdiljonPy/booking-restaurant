@@ -1,7 +1,10 @@
+from django.core.exceptions import ValidationError
+import re
+
+"""
 import random
 import requests
 from django.conf import settings
-from django.core.exceptions import ValidationError
 import re
 from datetime import datetime, timedelta
 
@@ -16,21 +19,10 @@ def generate_otp_code(*args, **kwargs):
 
 
 def send_otp(otp):
-    message = """App: payment(card): \notp_code: {}\notp_key: {}\nphone_number: {}\ncreated_at: {}""".format(
+    message = "App: payment(card): \notp_code: {}\notp_key: {}\nphone_number: {}\ncreated_at: {}".format(
         otp.otp_code, otp.otp_key, otp.phone_number, otp.created_at)
     requests.get(settings.TELEGRAM_API_URL.format(settings.BOT_TOKEN, message, settings.CHANNEL_ID))
 
-
-def is_valid_pan(pan):
-    pattern = r'^(8600|9860)\d{12}$'
-    if not re.match(pattern, pan):
-        raise ValidationError('Pan is invalid')
-
-
-def is_valid_month(month):
-    pattern = r'^(0[1-9]|1[0-2])$'
-    if not re.match(pattern, month):
-        raise ValidationError('Month should be between one and twelve')
 
 
 def is_valid_year(num):
@@ -39,7 +31,7 @@ def is_valid_year(num):
 
 
 def is_valid_uzbek_number(phone_number):
-    pattern = r'^(?:\+998|998)\d{9}$'
+    pattern = r'^(?:\+998|998)\d{9}$'card = models.ForeignKey(Card, on_delete=models.CASCADE)
     if not re.match(pattern, phone_number):
         raise ValidationError('You should enter an uzbek number')
 
@@ -52,3 +44,29 @@ def number_of_otp(otp):
             return False
         return 'delete'
     return True
+"""
+
+
+def pan_changer(pan):
+    if len(pan) != 16:
+        raise ValueError("Pan must be exactly 16 characters long.")
+    first_four = pan[:4]
+    middle_eight = '*' * 8
+    last_four = pan[-4:]
+    pan = first_four + middle_eight + last_four
+    return pan
+
+
+def is_valid_pan(pan):
+    pattern = r'^(9860|8600)\*{8}\d{4}$'
+
+    regex = re.compile(pattern)
+
+    if not regex.match(pan):
+        raise ValidationError('Pan is invalid')
+
+
+def is_valid_month(month):
+    pattern = r'^(0[1-9]|1[0-2])$'
+    if not re.match(pattern, month):
+        raise ValidationError('Month should be between one and twelve')

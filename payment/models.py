@@ -1,54 +1,67 @@
 import uuid
-from datetime import timedelta, datetime
-from booking.models import Booking
-from .utils import generate_otp_code, is_valid_uzbek_number, is_valid_pan, is_valid_year, is_valid_month
+
+from .utils import is_valid_pan, is_valid_month
 from django.db import models
-from authentication.models import User
-from restaurants.models import Restaurant
+
+"""
+from ..authentication.models import User
+from ..restaurants.models import Restaurant
+from ..booking.models import Booking
+"""
+
+FAILED, PAYED, RETURNED = ('failed', 'payed', 'returned')
 
 
-class Card(models.Model):
+class BaseModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+"""
+class Card(models.Model, BaseModel):
     pan = models.CharField(max_length=16, default=0, validators=[is_valid_pan])
     expire_month = models.CharField(max_length=2, default=0, validators=[is_valid_month])
     expire_year = models.IntegerField(default=0, validators=[is_valid_year])
     phone_number = models.CharField(max_length=13, validators=[is_valid_uzbek_number])
-    card_holder = models.ForeignKey(User, on_delete=models.CASCADE)
-    token = models.UUIDField(default=uuid.uuid4, editable=False)
+    card_holder = models.ForeignKey('authentication.User', on_delete=models.CASCADE)
     balance = models.FloatField(default=0)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.pan
 
 
-class OTP(models.Model):
+class OTP(models.Model, BaseModel):
     otp_key = models.UUIDField(default=uuid.uuid4)
     otp_code = models.IntegerField(default=generate_otp_code)
-    phone_number = models.CharField(max_length=13, validators=[is_valid_uzbek_number])
-    expire_date = models.DateTimeField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def save(
-            self, force_insert=False, force_update=False, using=None, update_fields=None
-    ):
-        self.expire_date = datetime.now() + timedelta(minutes=10)
-        return super().save(force_insert, force_update, using, update_fields=update_fields)
-
-    def __str__(self):
-        return str(self.otp_key)
+    user = models.ForeignKey('authentication.User', on_delete=models.CASCADE)
+    
+"""
 
 
-class PaymentWithHistory(models.Model):
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE)
-    card = models.ForeignKey(Card, on_delete=models.CASCADE)
-    restaurants = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
-    order_price = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='order_price')
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+class PaymentWithHistory(models.Model, BaseModel):
+    STATUS_CHOICES = (
+        (1, PAYED),
+        (2, FAILED),
+        (3, RETURNED)
+    )
+    booking = models.ForeignKey('booking.Booking', on_delete=models.CASCADE)
+    user = models.ForeignKey('authentication.User', on_delete=models.CASCADE)
+    pan = models.CharField(max_length=16, validators=[is_valid_pan])
+    expire_month = models.CharField(max_length=2, validators=[is_valid_month])
+    status = models.CharField(max_length=21, choices=STATUS_CHOICES)
 
     def __str__(self):
-        return str(self.card.pan)
+        return str(self.user.username)
+
+
+"""
+
+payment:
+
+1) post
+2) add card
+3) remove card
+
+"""
