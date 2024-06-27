@@ -1,21 +1,28 @@
 from rest_framework import serializers
 from booking.models import Booking
 from restaurants.models import Restaurant
-from .models import Manager, Booking_costumer
+from .models import Manager, Employee
 from authentication.models import User
 
 
 class RestaurantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Restaurant
-        fields = '__all__'
-
+        fields = [
+            'id', 'author', 'name', 'picture', 'description',
+            'service_fee', 'booking_count_total', 'booking_count_day_by_day',
+            'address', 'phone', 'email', 'category', 'created_at', 'updated_at'
+        ]
 
 
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
-        fields = '__all__'
+        fields = [
+            'id', 'author', 'restaurants', 'room', 'number_of_people', 'contact_number',
+            'contact_username', 'comment', 'occasion', 'status', 'paying_status',
+            'booked_time', 'planed_time'
+        ]
 
 
 class ManagerSerializer(serializers.ModelSerializer):
@@ -23,13 +30,13 @@ class ManagerSerializer(serializers.ModelSerializer):
         model = Manager
         fields = ['user', 'title', 'phone_number', 'date_of_birth', 'hire_date', 'fire_date']
 
-class BookingCostumerSerializer(serializers.ModelSerializer):
+
+
+
+class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Booking_costumer
+        model = Employee
         fields = '__all__'
-
-
-
 
 
 class DateQuerySerializer(serializers.Serializer):

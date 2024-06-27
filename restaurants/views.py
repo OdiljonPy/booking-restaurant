@@ -3,34 +3,20 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.decorators import permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from .models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom, RestaurantMenu, Comment
+from .models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom, RestaurantMenu, Comment, MenuType
 from .serializers import (CategorySerializer, RestaurantSerializer,
                           RoomSerializer, RoomTypeSerializer, MenuSerializer, CommentSerializer,
-                          RestaurantCreateSerializer, RoomCreateSerializer, MenuCreateSerializer)
-from .permission import IsOwner
-
-from difflib import SequenceMatcher
+                          RestaurantCreateSerializer, RoomCreateSerializer, MenuCreateSerializer,
+                          CategoryCreateSerializer, RoomTypeCreateSerializer, MenuTypeCreateSerializer,
+                          MenuTypeSerializer)
 
 
 # TODO: need to write filter for restaurant
 class RestaurantFilterViewSet(ViewSet):
-    permission_classes = [AllowAny]
 
-    # def restaurant_filter_view(self, request):
-    #     obj = request.GET.get('q')
-    #     print(obj)
-    #     restaurant = Restaurant.objects.all()
-    #     print(str(restaurant))
-    #     matcher = SequenceMatcher(None, str(obj), str(restaurant))
-    #     similarity = matcher.ratio()
-    #     result = obj in restaurant
-    #     print(similarity)
-    #     if similarity >= 0.1:
-    #         return Response(data={'message': Restaurant.objects.filter(restaurant_name__in=obj)}, status=status.HTTP_200_OK)
-    #     return Response(data={'message': 'Invalid request'})
     @swagger_auto_schema(
         operation_summary='Show restaurants',
         operation_description='Show restaurants list',
@@ -48,17 +34,17 @@ class RestaurantCategoryViewSet(ViewSet):
     @swagger_auto_schema(
         operation_description="Create Restaurant",
         operation_summary="Create Restaurant",
-        request_body=CategorySerializer,
-        responses={201: CategorySerializer()},
+        request_body=CategoryCreateSerializer,
+        responses={201: CategoryCreateSerializer()},
         tags=['Restaurant']
     )
     @permission_classes([IsAuthenticated])
     def create_category(self, request):
-        category_serializer = CategorySerializer(data=request.data)
+        category_serializer = CategoryCreateSerializer(data=request.data)
         if category_serializer.is_valid():
             category_serializer.save()
-            return Response({"result": "Category added successfully", "status": status.HTTP_201_CREATED})
-        return Response({"result": "please add the category name", "status": status.HTTP_400_BAD_REQUEST})
+            return Response(data={"result": "Category added successfully"}, status=status.HTTP_201_CREATED)
+        return Response(data={"result": "please add the category name"}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Show categories',
@@ -93,7 +79,7 @@ class RestaurantViewSet(ViewSet):
     @swagger_auto_schema(
         operation_summary='Create Restaurant',
         operation_description='Create Restaurant',
-        request_body=RestaurantSerializer,
+        request_body=RestaurantCreateSerializer,
         responses={201: 'Restaurant successfully created'},
         tags=['Restaurant']
     )
@@ -152,13 +138,13 @@ class RoomTypeViewSet(ViewSet):
     @swagger_auto_schema(
         operation_summary='Create Room Type',
         operation_description='Create Room Type',
-        request_body=RoomSerializer,
+        request_body=RoomTypeCreateSerializer,
         responses={201: 'Restaurant successfully created'},
         tags=['Restaurant']
     )
     @permission_classes([IsAuthenticated])
     def add_room_type(self, request):
-        room_type = RoomTypeSerializer(data=request.data)
+        room_type = RoomTypeCreateSerializer(data=request.data)
         if room_type.is_valid():
             room_type.save()
             return Response(data={'result': room_type.data}, status=status.HTTP_201_CREATED)
@@ -167,7 +153,7 @@ class RoomTypeViewSet(ViewSet):
     @swagger_auto_schema(
         operation_summary='Show Room Type',
         operation_description='Show Room Type',
-        responses={200: RestaurantSerializer()},
+        responses={200: RoomTypeSerializer()},
         tags=['Restaurant']
     )
     @permission_classes([AllowAny])
@@ -179,7 +165,7 @@ class RoomTypeViewSet(ViewSet):
     @swagger_auto_schema(
         operation_summary='Edit Room Type',
         operation_description='Edit Restaurant Room Type',
-        responses={200: RestaurantSerializer(), 202: RestaurantSerializer(), 400: 'Invalid request',
+        responses={200: RoomTypeSerializer(), 202: RoomTypeSerializer(), 400: 'Invalid request',
                    404: 'Room type does not exist'},
         tags=['Restaurant']
     )
@@ -277,6 +263,62 @@ class RestaurantRoomViewSet(ViewSet):
         return Response(data={"message": message}, status=status.HTTP_200_OK)
 
 
+class MenuTypeViewSet(ViewSet):
+
+    @swagger_auto_schema(
+        operation_summary='Create Menu Type',
+        operation_description='Create Restaurant Menu Type',
+        request_body=MenuTypeCreateSerializer(),
+        responses={201: 'Restaurant menu type successfully created', 400: 'Invalid request'},
+        tags=['Restaurant']
+    )
+    def add_menu_type(self, request):
+        menu_type = MenuType.objects.all()
+        serializer = MenuTypeCreateSerializer(menu_type, many=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data={'result': serializer.data}, status=status.HTTP_201_CREATED)
+        return Response(data={'result': 'Invalid serializer'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
+        operation_summary='Show Menu Type',
+        operation_description='Show Restaurant menu type',
+        responses={200: RoomSerializer()},
+        tags=['Restaurant']
+    )
+    def show_menu_type(self):
+        meny_type = MenuType.objects.all()
+        serializer = MenuTypeSerializer(meny_type, many=True).data
+        return Response(data={'result': serializer}, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_summary='Edit Menu type',
+        operation_description='Edit Restaurant Meny Type',
+        responses={200: MenuTypeSerializer(), 202: MenuTypeSerializer(), 400: 'Invalid request',
+                   404: 'Menu type does not exist'},
+        tags=['Restaurant']
+    )
+    def edit_menu_type(self, request, pk):
+        menu_type = MenuType.objects.filter(id=pk).first()
+        serializer = MenuTypeSerializer(menu_type, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data={'result': serializer.data}, status=status.HTTP_202_ACCEPTED)
+        return Response(data={'result': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
+        operation_summary='Delete Menu type',
+        operation_description='Delete Menu type',
+        responses={204: "Menu type successfully deleted"},
+        tags=['Restaurant']
+    )
+    def delete_menu_type(self, request, pk):
+        menu_type = MenuType.objects.filter(id=pk).first()
+        message = f"{menu_type} type was deleted"
+        menu_type.delete()
+        return Response(data={'result': message}, status=status.HTTP_204_NO_CONTENT)
+
+
 class RestaurantMenuViewSet(ViewSet):
 
     @swagger_auto_schema(
@@ -368,6 +410,3 @@ class CommentViewSet(ViewSet):
             serializer.save(user=self.request.user)
             return Response(data={"message": "Comment successfully added"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# def restaurant_rate_view(request):
-#     pass
