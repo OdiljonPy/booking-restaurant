@@ -1,12 +1,9 @@
 import uuid
-
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 from rest_framework.serializers import Serializer
-
 from authentication.validations import validate_uz_number
 from authentication.utils import generate_otp_code
-
 from .models import User, OTP
 
 

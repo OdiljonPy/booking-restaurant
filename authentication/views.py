@@ -1,10 +1,8 @@
 from datetime import timedelta, datetime
-
 from django.contrib.auth import update_session_auth_hash
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, viewsets
-
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import check_password, make_password
@@ -41,7 +39,7 @@ class UserViewSet(viewsets.ViewSet):
         otp_all = OTP.objects.filter(user_id=user_validate.id)
         if otp_all and len(otp_all) >= 3 and otp_all.order_by('-created_at').first().created_at + timedelta(
                 hours=12) > datetime.now():
-            return Response({"error": "12 soatdan keyin urunib ko'r bratishka"})
+            return Response({"error": "12 soatdan keyin urunib ko'ring!"})
         otp = OTP.objects.create(user_id=user_validate.id)
         otp.user.created_at += timedelta(minutes=1)
         otp.save()
