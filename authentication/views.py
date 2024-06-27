@@ -1,10 +1,8 @@
 from datetime import timedelta, datetime
-
 from django.contrib.auth import update_session_auth_hash
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, viewsets
-
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import check_password, make_password
@@ -41,7 +39,7 @@ class UserViewSet(viewsets.ViewSet):
         otp_all = OTP.objects.filter(user_id=user_validate.id)
         if otp_all and len(otp_all) >= 3 and otp_all.order_by('-created_at').first().created_at + timedelta(
                 hours=12) > datetime.now():
-            return Response({"error": "12 soatdan keyin urunib ko'r bratishka"})
+            return Response({"error": "12 soatdan keyin urunib ko'ring!"})
         otp = OTP.objects.create(user_id=user_validate.id)
         otp.user.created_at += timedelta(minutes=1)
         otp.save()
@@ -78,16 +76,20 @@ class OtpViewSet(viewsets.ViewSet):
     )
     def verify(self, request):
         data = request.data
-
         if not data.get('otp_code') is None or not data.get('otp_key') is None:
 
             otp = OTP.objects.filter(otp_key=data['otp_key']).first()
-
             if not otp:
                 return Response({'error': 'OTP not found', 'ok': False}, status=status.HTTP_400_BAD_REQUEST, )
             if otp.user.created_at > datetime.now():
                 return Response({'error': 'OTP expired', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
+
+            if otp.attempts > 3:
+                return Response({"error": "Too many attempts! Try later after 12 hours.", 'ok': False},
+                                status=status.HTTP_400_BAD_REQUEST)
             if otp.otp_code != data['otp_code'] and otp.otp_key != data['otp_key']:
+                otp.attempts += 1
+                otp.save(update_fields=['attempts'])
                 return Response({'error': 'OTP code mismatch', 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
             user = otp.user
             user.is_verified = True
@@ -139,7 +141,7 @@ class ResetPassword(viewsets.ViewSet):
         if not user or not user.is_verified:
             return Response({"error": "User not found!", "ok": False})
         obj_all = OTP.objects.filter(user_id=user.id)
-        if len(obj_all) > 3 and datetime.now() - obj_all.first().created_at > timedelta(hours=12):
+        if len(obj_all) > 3 or datetime.now() - obj_all.first().created_at > timedelta(hours=12):
             return Response({'error': 'Too many attempts try after 12 hours', 'ok': False},
                             status=status.HTTP_400_BAD_REQUEST)
         otp = OTP.objects.create(user_id=user.id)
@@ -162,7 +164,7 @@ class ResetPassword(viewsets.ViewSet):
         otp = OTP.objects.filter(otp_key=otp_key).first()
         if not otp:
             return Response({"error": "Otp_key wrong!", "ok": False}, status=status.HTTP_400_BAD_REQUEST)
-        if otp.attempts >= 3:
+        if otp.attempts > 3:
             return Response({"error": "Too many attempts! Try later after 12 hours.", 'ok': False},
                             status=status.HTTP_400_BAD_REQUEST)
         if otp.otp_code != otp_code:

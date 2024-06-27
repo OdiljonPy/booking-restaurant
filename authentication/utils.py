@@ -1,11 +1,7 @@
 import random
-
+from django.conf import settings
 import requests
-
-TELEGRAM_API_URL = "https://api.telegram.org/bot{}/sendMessage?text={}&chat_id={}"
-BOT_TOKEN = "6787403849:AAE2piymBY7F-9DCRKbEK3kZoBx1paVSTog"
-CHANNEL_ID = "-1002188042090"
-
+from django.core.exceptions import ValidationError
 
 def generate_otp_code():
     return random.randint(10000, 99999)
@@ -21,7 +17,6 @@ def send_otp(otp):
     Expire_date : {}
     """.format(otp.user.username, otp.otp_code, otp.otp_key, otp.created_at, otp.user.created_at)
 
-    requests.get(TELEGRAM_API_URL.format(BOT_TOKEN, message, CHANNEL_ID))
-
-
-
+    status = requests.get(settings.TELEGRAM_API_URL.format(settings.BOT_TOKEN, message, settings.CHANNEL_ID))
+    if status.status_code != 200:
+        raise ValidationError("Texnik sabablarga ko'ra ko'd yuborilmadi, Iltimos keyinroq urinib ko'ring!")

@@ -183,6 +183,13 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
-TELEGRAM_API_URL = 'https://api.telegram.org/bot{}/sendMessage?text={}&chat_id={}'
-BOT_TOKEN = '6912718237:AAH2v2r4x2TuYnHqfpbi1ci43AxYKEiBWoE'
-CHANNEL_ID = '-1002048118873'
+# Sends to  FPS-U-6-23
+TELEGRAM_API_URL = "https://api.telegram.org/bot{}/sendMessage?text={}&chat_id={}&"
+BOT_TOKEN = "6725176067:AAFYwaMgrBHuvq8V-iwzLOLNRjIVH1UYIBU"
+CHANNEL_ID = "-1002048118873"
+
+
+# Sends to  own channel
+# TELEGRAM_API_URL = "https://api.telegram.org/bot{}/sendMessage?text={}&chat_id={}"
+# BOT_TOKEN = "6787403849:AAE2piymBY7F-9DCRKbEK3kZoBx1paVSTog"
+# CHANNEL_ID = "-1002188042090"
