@@ -5,13 +5,13 @@ from django.db import models
 from authentication.models import User
 from restaurants.models import Restaurant, RestaurantRoom, RestaurantMenu
 
-STATUS_CHOICES = [
-    ('1', 'created'),
-    ('2', 'paying'),
-    ('3', 'paid'),
-    ('4', 'booked'),
-    ('5', 'cancelled'),
-]
+STATUS_CHOICES = (
+    ('1', 'CREATED'),
+    ('2', 'PAYING'),
+    ('3', 'PAID'),
+    ('4', 'BOOKED'),
+    ('5', 'CANCELLED'),
+)
 
 
 class Occasion(models.Model):
@@ -63,8 +63,3 @@ class Booking(models.Model):
 
     def __str__(self):
         return self.client_name
-
-
-
-
-

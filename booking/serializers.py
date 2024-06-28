@@ -16,6 +16,10 @@ class OrderItemsSerializer(serializers.ModelSerializer):
     def get_total_price(self, obj):
         return obj.calculate_total_price()
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        menu = instance.menu
+
 
 class BookingSerializer(serializers.ModelSerializer):
     # order_items = OrderItemsSerializer(many=True)
@@ -23,7 +27,7 @@ class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         fields = ['author', 'room', "restaurants", 'number_of_people', 'client_number', 'client_name', 'planed_from',
-                  'planed_to', "occasion"]
+                  'planed_to', "occasion", "status"]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -43,3 +47,10 @@ class OccasionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Occasion
         fields = ['name', ]
+
+
+class PayingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking
+
+    fields = ['author', "restaurants", 'client_name', "total_sum"]
