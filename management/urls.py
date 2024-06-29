@@ -24,6 +24,7 @@ urlpatterns = [
     path('restaurants/<int:rest_id>/bookings/<int:booking_id>/', AdministratorViewSet.as_view({
         'get': 'retrieve_booking', 'put': 'cancel_booking', 'delete': 'delete_booking'
     }), name='restaurant-bookings'),
+    path('restaurants/<int:rest_id>/managers/admins/', ManagementViewSet.as_view({'post': 'create_admin'}))
     # path('resturants/managers/',
     #      ManagementViewSet.as_view({'get': 'list_managers', 'post': 'create_manager'})),
 ]
