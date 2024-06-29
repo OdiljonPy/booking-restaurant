@@ -3,11 +3,12 @@ from django.conf import settings
 import requests
 from rest_framework.exceptions import ValidationError
 from datetime import timedelta, datetime
+from rest_framework import status
 
 
 def generate_otp_code():
     first_digit = random.randint(1, 9)
-    digits = [str(random.randint(0, 9)) for _ in range(4)]
+    digits = [str(random.randint(0, 9)) for i in range(4)]
     return str(first_digit) + ''.join(digits)
 
 
@@ -22,6 +23,19 @@ def send_otp(otp):
 
 
 def otp_expire(time):
-    if datetime.now() - time > timedelta(minutes=3):
+    if datetime.now() - time < timedelta(minutes=3):
         return False
     return True
+
+
+def check_otp(data):
+    if len(data) > 3 or data.order_by('-created_at').first().created_at - datetime.now() > timedelta(hours=12):
+        return True
+    return False
+
+
+def check_user(user):
+    if user is None:
+        return ValidationError({'message': 'User not found!', 'ok': False})
+    if not user.is_verified:
+        return ValidationError({"message": "User is not verified!", "ok": False})
