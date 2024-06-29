@@ -19,10 +19,10 @@ class TelegramUserViewSet(ViewSet):
     )
     def create(self, request):
         data = request.data
-        phone = TelegramUser.objects.filter(phone=data['phone']).first()
-        user = TelegramUser.objects.filter(telegram_id=data['telegram_id']).first()
-        if user is None:
-            if phone is None:
+        phone = TelegramUser.objects.filter(phone=data.get('phone')).first()
+        user = TelegramUser.objects.filter(telegram_id=data.get('telegram_id')).first()
+        if not user:
+            if not phone:
                 serializer = TelegramUserSerializer(data=data)
                 if serializer.is_valid():
                     serializer.save()
@@ -74,11 +74,6 @@ class RestMenuViewSet(ViewSet):  # RESTAURANT MENU
         operation_description='See Restaurant Menu details',
         request_body=RestaurantMenuSerializer,
     )
-    def menu_filter(self, request, pk):
-        menu = RestaurantMenu.objects.filter(restaurant_id=pk).order_by('restaurant__name')
-        serializer = RestaurantMenuSerializer(menu, many=True).data
-        return Response(data={'Restaurant Menu': serializer}, status=status.HTTP_200_OK)
-
     def menu_type(self, request):
         menu_type = MenuType.objects.all()
         serializer = MenuTypesSerializer(menu_type, many=True).data
