@@ -12,4 +12,5 @@ urlpatterns = [
 
     path('rest/menu/type/', RestMenuViewSet.as_view({'get': 'menu_type'})),
     path('rest/menu/', RestMenuViewSet.as_view({'get': 'restaurant_menu'})),
+    path('rest/menu/filter/<int:pk>/', RestMenuViewSet.as_view({'get': 'menu_filter'})),
 ]

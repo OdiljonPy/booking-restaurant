@@ -1,28 +1,19 @@
 from rest_framework import serializers
 from booking.models import Booking
 from restaurants.models import Restaurant
-from .models import Manager, Employee
+from .models import Manager, Booking_costumer
 from authentication.models import User
 
 
 class RestaurantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Restaurant
-        fields = [
-            'id', 'author', 'name', 'picture', 'description',
-            'service_fee', 'booking_count_total', 'booking_count_day_by_day',
-            'address', 'phone', 'email', 'category', 'created_at', 'updated_at'
-        ]
-
+        fields = '__all__'
 
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
-        fields = [
-            'id', 'author', 'restaurants', 'room', 'number_of_people', 'contact_number',
-            'contact_username', 'comment', 'occasion', 'status', 'paying_status',
-            'booked_time', 'planed_time'
-        ]
+        fields = '__all__'
 
 
 class ManagerSerializer(serializers.ModelSerializer):
@@ -31,11 +22,12 @@ class ManagerSerializer(serializers.ModelSerializer):
         fields = ['user', 'title', 'phone_number', 'date_of_birth', 'hire_date', 'fire_date']
 
 
-class EmployeeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Employee
-        fields = '__all__'
 
+
+class  BookingCostumerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking_costumer
+        fields = '__all__'
 
 class DateQuerySerializer(serializers.Serializer):
     date = serializers.DateField(format='%Y-%m-%d', input_formats=['%Y-%m-%d'], required=True)

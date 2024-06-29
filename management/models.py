@@ -1,20 +1,13 @@
 from django.db import models
+from datetime import datetime
 
 from authentication.models import User, validate_uz_number
 from django.utils import timezone
 
-from restaurants.models import Restaurant
+from restaurants.models import *
 
 
-class Role(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name
 
 
 class Manager(models.Model):
@@ -32,69 +25,44 @@ class Manager(models.Model):
         return self.user.username
 
 
-class Employee(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True, related_name='employees')
-    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
-    title = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=15, blank=True, validators=[validate_uz_number])
-    date_of_birth = models.DateField(null=True, blank=True)
-    hire_date = models.DateField(default=timezone.now)
+class Occasion_costumer(models.Model):
+    occasion_name = models.CharField(max_length=100)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.user
+        return self.occasion_name
 
+class OrderItems_costumer(models.Model):
+    menu = models.ForeignKey(RestaurantMenu, on_delete=models.CASCADE)
+    amount = models.IntegerField(default=0)
 
-class PerformanceReview(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='reviews')
-    reviewer = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True)
-    review_date = models.DateField(default=timezone.now)
-    comments = models.TextField()
-    rating = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.employee
-
-
-class Project(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField()
-    start_date = models.DateField()
-    end_date = models.DateField(null=True, blank=True)
-    managers = models.ManyToManyField(Manager, related_name='projects')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    def calculate_total_price(self):
+        return self.menu.price * self.amount
 
     def __str__(self):
-        return self.name
+        return self.menu.name
+class Booking_costumer(models.Model):
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    restaurants = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    room = models.ForeignKey(RestaurantRoom, on_delete=models.CASCADE)
+    number_of_people = models.IntegerField(default=1)
+    contact_number = models.CharField(max_length=11)
+    contact_username = models.CharField(max_length=120)
+    comment = models.TextField(blank=True, null=True)
+    occasion = models.ManyToManyField(Occasion)
+    booked_time = models.DateTimeField(auto_now_add=True)
+    planed_time = models.DateTimeField(default=datetime.now)
 
+    order_items = models.ForeignKey(OrderItems, on_delete=models.CASCADE)
 
-class Task(models.Model):
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
-    name = models.CharField(max_length=100)
-    description = models.TextField()
-    assigned_to = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
-    due_date = models.DateField(null=True, blank=True)
-    completed = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.project
-
-
-class LeaveRequest(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_requests')
-    start_date = models.DateField()
-    end_date = models.DateField()
-    reason = models.TextField()
-    approved = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    paying_status = models.BooleanField(default=False)
+    status = models.BooleanField(default=True)
+    total_sum = models.PositiveIntegerField(default=0)
 
     def __str__(self):
-        return self.employee
+        return self.restaurants.restaurant_name

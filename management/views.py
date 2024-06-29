@@ -5,13 +5,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Sum
 from django.utils.dateparse import parse_date
-
 from authentication.models import User
 from restaurants.models import Restaurant
 from booking.models import Booking
-from .models import Role, Manager, Employee, PerformanceReview, Project, Task, LeaveRequest
-from .serializers import RestaurantSerializer, BookingSerializer, ManagerSerializer, EmployeeSerializer, \
-    DateRangeQuerySerializer, DateQuerySerializer
+from .models import Manager,Booking_costumer
+from .serializers import BookingCostumerSerializer,RestaurantSerializer, BookingSerializer, ManagerSerializer, DateRangeQuerySerializer, \
+    DateQuerySerializer
 from payment.models import PaymentWithHistory
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg import openapi
@@ -297,45 +296,26 @@ class ManagementViewSet(viewsets.ViewSet):
             )
         },
     )
+
+    def update_manager(self,request):
+        pass
+
+
+
     def list_managers(self, request):
         managers = Manager.objects.all()
         serializer = ManagerSerializer(managers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class BookingcostumerViewSet(viewsets.ViewSet):
+    def create_booking_costumer(self, request, *args, **kwargs):
+        booking_serializer = BookingCostumerSerializer(data=request.data)
+        if booking_serializer.is_valid():
+            booking_serializer.save()
+            return Response({"message": "Booking Added Sucessfully", "status": status.HTTP_201_CREATED})
+        return Response({"message": "please fill the datails", "status": status.HTTP_400_BAD_REQUEST})
 
-class EmployerViewSet(viewsets.ViewSet):
-    # permission_classes = [IsAuthenticated]
-
-    @swagger_auto_schema(
-        operation_description="Create a new employee",
-        operation_summary="Add an employee",
-        request_body=EmployeeSerializer,
-        responses={
-            201: openapi.Response(
-                description='Employee added Successfully',
-            ),
-            400: openapi.Response(
-                description='Invalid data',
-            )
-        },
-    )
-    def create_employee(self, request, *args, **kwargs):
-        employer_serializer = EmployeeSerializer(data=request.data)
-        if employer_serializer.is_valid():
-            employer_serializer.save()
-            return Response({"message": "Employee Added Successfully", "status": status.HTTP_201_CREATED})
-        return Response({"message": "Invalid data"}, status.HTTP_400_BAD_REQUEST)
-
-    @swagger_auto_schema(
-        operation_description="List the employees of a manager",
-        operation_summary="Get all employees",
-        responses={
-            200: openapi.Response(
-                description='List of all employees',
-            )
-        },
-    )
-    def list_employees(self, request):
-        employees = Employee.objects.all()
-        serializer = EmployeeSerializer(employees, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def show_booking_costumer(self, request):
+        queryset = Booking_costumer.objects.all()
+        bookings = BookingCostumerSerializer(queryset, many=True).data
+        return Response(data={'bookings': bookings}, status=status.HTTP_200_OK)
