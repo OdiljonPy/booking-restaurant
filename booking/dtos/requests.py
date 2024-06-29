@@ -1,12 +1,11 @@
 from rest_framework import serializers
-from rest_framework.serializers import ModelSerializer
 
-from authentication.models import User
-from .models import Booking, Occasion, OrderItems, Order
-from restaurants.serializers import MenuSerializer
+from booking.models import Booking, Occasion, OrderItems
+from booking.serializers import OrderItemsSerializer
 
 
-class OrderItemsSerializer(serializers.ModelSerializer):
+# INFO: This serializers used on views
+class OrderItemsRequestSerializer(serializers.ModelSerializer):
     total_price = serializers.SerializerMethodField()
 
     class Meta:
@@ -21,18 +20,12 @@ class OrderItemsSerializer(serializers.ModelSerializer):
         menu = instance.menu
 
 
-class OrderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Order
-        fields = ''
-
-
-class BookingSerializer(serializers.ModelSerializer):
+class BookingRequestSerializer(serializers.ModelSerializer):
     # order_items = OrderItemsSerializer(many=True)
 
     class Meta:
         model = Booking
-        fields = ['author', 'room', "restaurants", 'number_of_people', 'client_number', 'client_name', 'planed_from',
+        fields = ['author', 'room', 'number_of_people', 'client_number', 'client_name', 'planed_from',
                   'planed_to', "occasion", "status"]
 
     def to_representation(self, instance):
@@ -49,13 +42,13 @@ class BookingSerializer(serializers.ModelSerializer):
     #     return super().save(**kwargs)
 
 
-class OccasionSerializer(serializers.ModelSerializer):
+class OccasionRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Occasion
         fields = ['name', ]
 
 
-class PayingSerializer(serializers.ModelSerializer):
+class PayingRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
 

@@ -2,13 +2,17 @@ from drf_yasg.utils import swagger_auto_schema
 
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
-from rest_framework import status, viewsets
+from rest_framework import status
 from rest_framework.permissions import AllowAny
 
 from authentication.models import User
-from restaurants.models import RestaurantMenu, RestaurantRoom, Restaurant
-from booking.models import Booking, Occasion, OrderItems
+from restaurants.models import RestaurantRoom
+from booking.models import Booking, Occasion, Order
 from booking.serializers import BookingSerializer, OccasionSerializer, PayingSerializer
+from booking.dtos.requests import BookingRequestSerializer, OccasionRequestSerializer, PayingRequestSerializer, \
+    OrderItemsRequestSerializer
+from booking.dtos.responses import BookingResponseSerializer, OrderItemsResponseSerializer, PayingResponseSerializer, \
+    OccasionResponseSerializer
 from datetime import datetime, timedelta
 
 
@@ -16,8 +20,8 @@ class BookingViewSet(ViewSet):
     @swagger_auto_schema(
         operation_summary='Create Booking',
         operation_description='Create a booking',
-        request_body=BookingSerializer,
-        responses={201: BookingSerializer()},
+        request_body=BookingRequestSerializer,
+        responses={201: BookingResponseSerializer()},
         tags=['Booking'],
     )
     def create_booking(self, request):
@@ -30,7 +34,6 @@ class BookingViewSet(ViewSet):
         data['restaurants'] = room.restaurant.id
         data['room'] = room.id
         data['author'] = User.objects.filter(id=request.data['author']).first().id
-        # is_free = Booking.objects.filter(room=room.id, )
         booking_serializer = BookingSerializer(data=data)
 
         if booking_serializer.is_valid():
@@ -76,8 +79,10 @@ class BookingActionsViewSet(ViewSet):
     # )
     def pay_booking(self, request, pk):
         booking_detail = Booking.objects.filter(id=pk).first()
-        data = PayingSerializer(data=booking_detail).data
-        return Response(data={'data': data, 'message': f'{pk} id'}, status=status.HTTP_200_OK)
+        orders = Order.objects.filter()
+        if booking_detail:
+            data = PayingSerializer(data=booking_detail).data
+            return Response(data={'data': data, 'message': f'{pk} id'}, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
         operation_summary='Cancelled booking',
@@ -87,7 +92,9 @@ class BookingActionsViewSet(ViewSet):
     )
     def cancel_booking(self, request, pk):
         booking = Booking.objects.filter(id=pk).first()
-        booking.status = 'cancelled'
+        if not booking:
+            return Response({"message": "Booking not found", "ok": False, "status": status.HTTP_400_BAD_REQUEST})
+        booking.status = 5
         booking.save(update_fields=['status'])
 
     def set_status(self, request, pk):
