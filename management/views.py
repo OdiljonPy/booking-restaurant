@@ -8,15 +8,21 @@ from django.utils.dateparse import parse_date
 from authentication.models import User
 from restaurants.models import Restaurant
 from booking.models import Booking
-from .models import Manager,Booking_costumer,Employee
-from .serializers import EmployeeSerializer,BookingCostumerSerializer,RestaurantSerializer, BookingSerializer, ManagerSerializer, DateRangeQuerySerializer, \
+from restaurants.serializers import RestaurantSerializer
+from booking.serializers import BookingSerializer
+from .models import Manager, BookingCustomer
+from .serializers import BookingCustomerSerializer, \
+    ManagerSerializer, DateRangeQuerySerializer, \
     DateQuerySerializer
 from payment.models import PaymentWithHistory
 from rest_framework.permissions import IsAuthenticated
+from .permissions import IsAdminOrIsManager, IsAdmin
 from drf_yasg import openapi
 
 
 class UserViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated, IsAdmin]
+
     @swagger_auto_schema(
         operation_description="Delete User",
         operation_summary="Delete User",
@@ -38,7 +44,7 @@ class UserViewSet(viewsets.ViewSet):
 
 
 class RestaurantViewSet(viewsets.ViewSet):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrIsManager]
 
     @swagger_auto_schema(
         operation_description="List all restaurants",
@@ -171,7 +177,8 @@ class RestaurantViewSet(viewsets.ViewSet):
 
 
 class BookingViewSet(viewsets.ViewSet):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrIsManager]
+
     @swagger_auto_schema(
         operation_description="List bookings based on date",
         operation_summary="Get all bookings based on date",
@@ -265,7 +272,7 @@ class BookingViewSet(viewsets.ViewSet):
 
 
 class ManagementViewSet(viewsets.ViewSet):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrIsManager]
 
     @swagger_auto_schema(
         operation_description="Create a new manager for the restaurant",
@@ -296,60 +303,34 @@ class ManagementViewSet(viewsets.ViewSet):
             )
         },
     )
-
-    def update_manager(self,request):
+    def update_manager(self, request):
         pass
-
-
 
     def list_managers(self, request):
         managers = Manager.objects.all()
         serializer = ManagerSerializer(managers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(
-        operation_description="Create a new employer for the restaurant",
-        operation_summary="Add a employer",
-        request_body=EmployeeSerializer,
-        responses={
-            201: openapi.Response(
-                description='Employer Added Successfully',
-            ),
-            400: openapi.Response(
-                description='Invalid data',
-            )
-        },
-    )
-    def create_employee(self, request):
-        employee_serializer = EmployeeSerializer(data=request.data)
-        if employee_serializer.is_valid():
-            employee_serializer.save()
-            return Response({"message": "Employee Added Successfully", "status": status.HTTP_201_CREATED})
-        return Response({"message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(
-        operation_description="List all employees",
-        operation_summary="Get all employees",
-        responses={
-            200: openapi.Response(
-                description='List of all employees',
-            )
-        },
-    )
-    def list_employees(self, request):
-        employees = Employee.objects.all()
-        serializer = EmployeeSerializer(employees, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-class BookingcostumerViewSet(viewsets.ViewSet):
-    def create_booking_costumer(self, request, *args, **kwargs):
-        booking_serializer = BookingCostumerSerializer(data=request.data)
+class BookingCustomerViewSet(viewsets.ViewSet):
+    def create_booking_customer(self, request, *args, **kwargs):
+        booking_serializer = BookingCustomerSerializer(data=request.data)
         if booking_serializer.is_valid():
             booking_serializer.save()
-            return Response({"message": "Booking Added Sucessfully", "status": status.HTTP_201_CREATED})
-        return Response({"message": "please fill the datails", "status": status.HTTP_400_BAD_REQUEST})
+            return Response({"message": "Booking Added Successfully", "status": status.HTTP_201_CREATED})
+        return Response({"message": "please fill the details", "status": status.HTTP_400_BAD_REQUEST})
 
-    def show_booking_costumer(self, request):
-        queryset = Booking_costumer.objects.all()
-        bookings = BookingCostumerSerializer(queryset, many=True).data
-        return Response(data={'bookings': bookings}, status=status.HTTP_200_OK)
+    def show_booking_customer(self, request):
+        customers_bookings = BookingCustomer.objects.all()
+        serializer = BookingCustomerSerializer(customers_bookings, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def cancel_booking_customer(self, request, rest_id, booking_id):
+        restaurant = Restaurant.objects.get(pk=rest_id)
+        if not restaurant.exists():
+            return Response(data={'error': 'Restaurant not found'}, status=status.HTTP_404_NOT_FOUND)
+        customer_booking = BookingCustomer.objects.get(pk=booking_id, restaurant_id=rest_id)
+        if not customer_booking.exists():
+            return Response(data={'error': 'Customer Booking not found'}, status=status.HTTP_404_NOT_FOUND)
+        customer_booking.status = 'cancelled'
+        return Response(data={'result': f'Booking with {customer_booking.id} cancelled'}, status=status.HTTP_200_OK)

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RestaurantViewSet, BookingViewSet, ManagementViewSet, UserViewSet, BookingcostumerViewSet
+from .views import RestaurantViewSet, BookingViewSet, ManagementViewSet, UserViewSet, BookingCustomerViewSet
 
 urlpatterns = [
     path('users/<int:user_id>/', UserViewSet.as_view({'delete': 'delete_user'})),
@@ -28,7 +28,6 @@ urlpatterns = [
     path('resturants/managers/',
          ManagementViewSet.as_view({'get': 'list_managers', 'post': 'create_manager'})),
     path('resturants/costumer_bookings/',
-         BookingcostumerViewSet.as_view({'get': 'show_booking_costumer', 'post': 'create_booking_costumer'})),
-    path('restaurants/managers/employers',
-         ManagementViewSet.as_view({'get': 'list_employees', 'post': 'create_employers'}))
+         BookingCustomerViewSet.as_view({'get': 'show_booking_customer', 'post': 'create_booking_customer'})),
+
 ]
