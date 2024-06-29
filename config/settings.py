@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg',
+    'modeltranslation',
 
     # local apps
     'authentication',
@@ -113,7 +114,19 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-ru'
+
+gettext = lambda x: x
+
+LANGUAGES = (
+    ('uz', gettext('Uzbek')),
+    ('ru', gettext('Russian'))
+)
+
+MODELTRANSLATION_DEFAULT_LANGUAGE = 'ru'
+MODELTRANSLATION_LANGUAGES = (
+    'uz', 'ru'
+)
 
 TIME_ZONE = 'Asia/Tashkent'
 
@@ -187,7 +200,6 @@ SIMPLE_JWT = {
 TELEGRAM_API_URL = "https://api.telegram.org/bot{}/sendMessage?text={}&chat_id={}&"
 BOT_TOKEN = "6725176067:AAFYwaMgrBHuvq8V-iwzLOLNRjIVH1UYIBU"
 CHANNEL_ID = "-1002048118873"
-
 
 # Sends to  own channel
 # TELEGRAM_API_URL = "https://api.telegram.org/bot{}/sendMessage?text={}&chat_id={}"

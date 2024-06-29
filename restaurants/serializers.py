@@ -1,5 +1,6 @@
 from rest_framework.serializers import ModelSerializer
 from .models import RestaurantCategory, Restaurant, RoomType, RestaurantRoom, RestaurantMenu, Comment, MenuType
+from django.conf import settings
 
 
 class CategorySerializer(ModelSerializer):
@@ -31,6 +32,15 @@ class RoomTypeSerializer(ModelSerializer):
     class Meta:
         model = RoomType
         fields = ['id', 'name']
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        lang = request.headers.get('Accept-Language', settings.MODELTRANSLATION_DEFAULT_LANGUAGE)
+        if lang not in settings.MODELTRANSLATION_LANGUAGES:
+            lang = settings.MODELTRANSLATION_DEFAULT_LANGUAGE
+        data = super().to_representation(instance)
+        data['name'] = getattr(instance, 'name_' + lang)
+        return data
 
 
 class RoomTypeCreateSerializer(ModelSerializer):

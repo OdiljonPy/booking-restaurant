@@ -169,10 +169,10 @@ class RoomTypeViewSet(ViewSet):
     )
     def show_room_type(self, request):
         room_type = RoomType.objects.all()
-        room_type_serialize = RoomTypeSerializer(room_type, many=True)
-        if room_type_serialize.is_valid():
-            return Response(data={'result': room_type_serialize.data}, status=status.HTTP_200_OK)
-        return Response(data={"result": 'Invalid serializer'}, status=status.HTTP_400_BAD_REQUEST)
+        room_type_serialize = RoomTypeSerializer(room_type, many=True, context={'request': request})
+        # if room_type_serialize.is_valid():
+        return Response(data={'result': room_type_serialize.data}, status=status.HTTP_200_OK)
+        # return Response(data={"result": 'Invalid serializer'}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Edit Room Type',
