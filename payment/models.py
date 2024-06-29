@@ -38,7 +38,8 @@ class PaymentWithHistory(models.Model):
         (3, FAILED),
         (4, RETURNED)
     )
-    booking = models.ForeignKey('booking.Booking', on_delete=models.CASCADE, blank=True, null=True)
+    booking = models.ForeignKey('booking.Booking', on_delete=models.CASCADE, blank=True,
+                                null=True)  # need to delete ' blank=True, null=True ' after booking changed.
     user = models.ForeignKey('authentication.User', on_delete=models.CASCADE)
     pan = models.CharField(max_length=16, validators=[is_valid_pan])
     expire_month = models.CharField(max_length=2, validators=[is_valid_month])
