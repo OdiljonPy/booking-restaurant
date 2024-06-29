@@ -23,7 +23,6 @@ from django.views.static import serve
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
 admin.site.site_header = 'Booking Admin'
 admin.site.site_title = 'Booking Admin'
@@ -47,13 +46,9 @@ urlpatterns = [
     path('api/v1/restaurant/', include("restaurants.urls")),
     path('api/v1/booking/', include("booking.urls")),
     path('api/v1/auth/', include('authentication.urls')),
-    path('api/v1/token/', TokenObtainPairView.as_view()),
-    path('api/v1/token/refresh/', TokenRefreshView.as_view()),
-    path('api/v1/token/verify/', TokenVerifyView.as_view()),
     path('api/v1/restaurant/', include("restaurants.urls")),
     path('api/v1/management/', include("management.urls")),
     path('api/v1/telegram/', include("telegram.urls")),
-
     re_path(r'static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
     re_path(r'media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     re_path(

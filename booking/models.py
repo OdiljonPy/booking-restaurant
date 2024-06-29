@@ -5,13 +5,13 @@ from django.db import models
 from authentication.models import User
 from restaurants.models import Restaurant, RestaurantRoom, RestaurantMenu
 
-STATUS_CHOICES = [
-    ('1', 'created'),
-    ('2', 'paying'),
-    ('3', 'paid'),
-    ('4', 'booked'),
-    ('5', 'cancelled'),
-]
+STATUS_CHOICES = (
+    (1, 'CREATED'),
+    (2, 'PAYING'),
+    (3, 'PAID'),
+    (4, 'BOOKED'),
+    (5, 'CANCELLED'),
+)
 
 
 class Occasion(models.Model):
@@ -39,12 +39,24 @@ class OrderItems(models.Model):
         return self.menu.name
 
 
+class Order(models.Model):
+    order_items = models.ManyToManyField(OrderItems, blank=True)
+    room = models.ForeignKey(RestaurantRoom, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.room.name
+
+
 class Booking(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     restaurants = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     room = models.ForeignKey(RestaurantRoom, on_delete=models.CASCADE)
 
-    number_of_people = models.IntegerField(default=1)
+    number_of_people = models.IntegerField()
     client_number = models.CharField(max_length=13)
     client_name = models.CharField(max_length=120)
 
@@ -57,14 +69,9 @@ class Booking(models.Model):
 
     booked_time = models.DateTimeField(auto_now_add=True)
 
-    order_items = models.ManyToManyField(OrderItems, blank=True)
+    orders = models.ManyToManyField(Order, blank=True)
     status = models.CharField(choices=STATUS_CHOICES, default=1, max_length=10)
     total_sum = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.client_name
-
-
-
-
-
