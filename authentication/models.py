@@ -8,10 +8,10 @@ from authentication.validations import validate_uz_number
 
 ROLE_CHOICES = \
     (
-        (1, 'user'),
-        (2, 'superuser'),
-        (3, 'manager'),
-        (4, 'administrator'),
+        (1, 'USER'),
+        (2, 'SUPERUSER'),
+        (3, 'MANAGER'),
+        (4, 'ADMINISTRATOR'),
     )
 
 
