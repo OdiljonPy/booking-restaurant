@@ -1,17 +1,17 @@
 from django.urls import path
-from .views import UserViewSet, OtpViewSet, ChangePasswordViewSet, ResetPassword, OTPReset
+from .views import UserViewSet, ChangePasswordViewSet, ResetPassword, OTPReset
 
 urlpatterns = [
-    path('register/', UserViewSet.as_view({'post': 'create'}), name='register'),
+    path('register/', UserViewSet.as_view({'post': 'register'}), name='register'),
     path('login/', UserViewSet.as_view({'post': 'login'}), name='login'),
+    path('verify/', UserViewSet.as_view({'post': 'verify'}), name='verify'),
 
-    path('verify/', OtpViewSet.as_view({'post': 'verify'}), name='verify'),
     path('password/update/', ChangePasswordViewSet.as_view({'put': 'update'})),
 
+    path('password/otp/resend/', ResetPassword.as_view({'post': 'reset'})),
+    path('password/otp/verify/', ResetPassword.as_view({'post': 'verify'})),
+    path('password/token/reset/', ResetPassword.as_view({'post': 'reset_new'})),
 
-    path('password/reset/', ResetPassword.as_view({'post': 'reset'})),
-    path('password/verify/', ResetPassword.as_view({'post': 'verify'})),
-    path('password/reset_new/', ResetPassword.as_view({'post': 'reset_new'})),
+    path('resend_otp/', OTPReset.as_view({'post': 'resend_otp'})),
 
-    path('/resend_otp/', OTPReset.as_view({'post': 'resend_otp'})),
 ]

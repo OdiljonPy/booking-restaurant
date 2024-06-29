@@ -2,21 +2,26 @@ from drf_yasg.utils import swagger_auto_schema
 
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
-from rest_framework import status, viewsets
+from rest_framework import status
 from rest_framework.permissions import AllowAny
 
 from authentication.models import User
-from restaurants.models import RestaurantMenu, RestaurantRoom, Restaurant
-from booking.models import Booking, Occasion, OrderItems
-from booking.serializers import BookingSerializer, OccasionSerializer
+from restaurants.models import RestaurantRoom
+from booking.models import Booking, Occasion, Order
+from booking.serializers import BookingSerializer, OccasionSerializer, PayingSerializer
+from booking.dtos.requests import BookingRequestSerializer, OccasionRequestSerializer, PayingRequestSerializer, \
+    OrderItemsRequestSerializer
+from booking.dtos.responses import BookingResponseSerializer, OrderItemsResponseSerializer, PayingResponseSerializer, \
+    OccasionResponseSerializer
+from datetime import datetime, timedelta
 
 
 class BookingViewSet(ViewSet):
     @swagger_auto_schema(
         operation_summary='Create Booking',
         operation_description='Create a booking',
-        request_body=BookingSerializer,
-        responses={201: BookingSerializer()},
+        request_body=BookingRequestSerializer,
+        responses={201: BookingResponseSerializer()},
         tags=['Booking'],
     )
     def create_booking(self, request):
@@ -29,7 +34,6 @@ class BookingViewSet(ViewSet):
         data['restaurants'] = room.restaurant.id
         data['room'] = room.id
         data['author'] = User.objects.filter(id=request.data['author']).first().id
-        # is_free = Booking.objects.filter(room=room.id, )
         booking_serializer = BookingSerializer(data=data)
 
         if booking_serializer.is_valid():
@@ -44,7 +48,7 @@ class BookingViewSet(ViewSet):
         operation_summary='Show bookings',
         operation_description='Show bookings list',
         responses={200: BookingSerializer()},
-        tags=['Restaurant']
+        tags=['Booking']
     )
     def show_bookings(self, request):
         queryset = Booking.objects.all()
@@ -57,48 +61,92 @@ class BookingActionsViewSet(ViewSet):
         operation_summary='Show booking details',
         operation_description='Show booking details',
         responses={200: BookingSerializer()},
-        tags=['Restaurant']
+        tags=['Booking']
 
     )
     def detail_booking(self, request, pk):
         booking_detail = Booking.objects.filter(id=pk).first()
         booking_detail = BookingSerializer(booking_detail).data
         return Response(
-            data={'data': booking_detail, 'message': f'{booking_detail['client_name']} {pk} id li buyurtmasi'},
+            data={'data': booking_detail, 'message': f"{booking_detail['client_name']} {pk} id li buyurtmasi"},
             status=status.HTTP_200_OK)
 
+    # @swagger_auto_schema(
+    #     operation_summary='Pay booking',
+    #     operation_description='Pay booking',
+    #     responses={200: PayingSerializer()},
+    #     tags=['Booking']
+    # )
     def pay_booking(self, request, pk):
         booking_detail = Booking.objects.filter(id=pk).first()
-        booking_pay = {}
-        return Response(data={'data': booking_pay, 'message': f'{pk} id'}, )
+        orders = Order.objects.filter()
+        if booking_detail:
+            data = PayingSerializer(data=booking_detail).data
+            return Response(data={'data': data, 'message': f'{pk} id'}, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        operation_summary='Cancelled booking',
+        operation_description='Booking will be cancelled',
+        responses={200: BookingSerializer()},
+        tags=['Booking']
+    )
     def cancel_booking(self, request, pk):
-        pass
+        booking = Booking.objects.filter(id=pk).first()
+        if not booking:
+            return Response({"message": "Booking not found", "ok": False, "status": status.HTTP_400_BAD_REQUEST})
+        booking.status = 5
+        booking.save(update_fields=['status'])
 
     def set_status(self, request, pk):
         pass
 
-    def delete_booking(self, request, *args, **kwargs):
-        booking_data = Booking.objects.filter(id=kwargs['pk'])
+    @swagger_auto_schema(
+        operation_summary='Booking deleted',
+        operation_description='Booking will be deleted',
+        responses={204: BookingSerializer()},
+        tags=['Booking']
+    )
+    def delete_booking(self, request, pk):
+        booking_data = Booking.objects.filter(id=pk).first()
         if booking_data:
             booking_data.delete()
-            return Response({"message": "Product delete Sucessfully", "status": status.HTTP_200_OK})
+            return Response({"message": "Product delete Sucessfully", 'ok': True, "status": status.HTTP_204_NO_CONTENT})
         return Response({"message": "Product data not found", "status": status.HTTP_400_BAD_REQUEST})
 
 
 class OccasionViewSet(ViewSet):
-    def create_occasion(self, request, *args, **kwargs):
-        queryset = Occasion.objects.create(**request.data)
-        queryset.save()
-        return Response(data={'id': queryset.pk, 'message': 'your occasion has been created'}, )
 
+    @swagger_auto_schema(
+        operation_summary='Create Occasion',
+        operation_description='Occasion will be created',
+        responses={200: OccasionSerializer()},
+        request_body=OccasionSerializer,
+        tags=['Booking']
+    )
+    def create_occasion(self, request):
+        queryset = Occasion.objects.create(request.data)
+        queryset.save()
+        return Response(data={'id': queryset.pk, 'message': 'Your occasion has been created'}, )
+
+    @swagger_auto_schema(
+        operation_summary='Occasions list',
+        operation_description='Occasions list',
+        responses={200: OccasionSerializer()},
+        tags=['Booking']
+    )
     def list_occasions(self, request):
         queryset = Occasion.objects.all()
         occasions = OccasionSerializer(queryset, many=True).data
-        return Response(data={'occasions': occasions}, )
+        return Response(data={'occasions': occasions}, status=status.HTTP_200_OK)
 
 
 class OccasionActionsViewSet(ViewSet):
+    @swagger_auto_schema(
+        operation_summary='Occasion data edit',
+        operation_description='Occasion details will be updated',
+        responses={200: OccasionSerializer()},
+        tags=['Booking']
+    )
     def edit_occasion(self, request, pk):
         occasion = Occasion.objects.filter(id=pk).first()
         if occasion:
@@ -110,3 +158,6 @@ class OccasionActionsViewSet(ViewSet):
 
 def calculate_free_times(room_id):
     room = RestaurantRoom.objects.filter(id=room_id).first()
+    bookings = Booking.objects.filter(room=room)
+    for i in bookings:
+        print(i)
