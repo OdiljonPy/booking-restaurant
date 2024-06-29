@@ -1,8 +1,7 @@
 from rest_framework import permissions
-from authentication.models import User
 
 
-class IsAdmin(permissions.BasePermission):
+class IsManager(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.user.status == 'is_admin':
             return True
@@ -14,7 +13,7 @@ class IsAdmin(permissions.BasePermission):
         return False
 
 
-class IsAdminOrIsManager(permissions.BasePermission):
+class IsManagerOrIsAdministrator(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         # Allow full access to admin users
         if request.user.status == 'is_admin':

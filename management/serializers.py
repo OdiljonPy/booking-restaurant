@@ -1,18 +1,12 @@
 from rest_framework import serializers
-from .models import Manager, BookingCustomer
+from .models import Manager
 from authentication.models import User
 
 
 class ManagerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Manager
-        fields = ['user',  'phone_number', 'date_of_birth', 'hire_date', 'fire_date']
-
-
-class BookingCustomerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BookingCustomer
-        fields = '__all__'
+        fields = ['user', 'phone_number', 'date_of_birth', 'hire_date', 'fire_date']
 
 
 class DateQuerySerializer(serializers.Serializer):

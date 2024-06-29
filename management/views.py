@@ -1,50 +1,23 @@
-from datetime import datetime
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Sum
-from django.utils.dateparse import parse_date
 from authentication.models import User
 from restaurants.models import Restaurant
 from booking.models import Booking
 from restaurants.serializers import RestaurantSerializer
 from booking.serializers import BookingSerializer
-from .models import Manager, BookingCustomer
-from .serializers import BookingCustomerSerializer, \
+from .models import Manager
+from .serializers import \
     ManagerSerializer, DateRangeQuerySerializer, \
     DateQuerySerializer
-from payment.models import PaymentWithHistory
 from rest_framework.permissions import IsAuthenticated
-from .permissions import IsAdminOrIsManager, IsAdmin
+from .permissions import IsManagerOrIsAdministrator, IsManager
 from drf_yasg import openapi
 
 
-class UserViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated, IsAdmin]
-
-    @swagger_auto_schema(
-        operation_description="Delete User",
-        operation_summary="Delete User",
-        responses={
-            204: openapi.Response(
-                description='User deleted Successfully',
-            ),
-            404: openapi.Response(
-                description='User not found'
-            )
-        },
-    )
-    def delete_user(self, request, user_id):
-        user_exists = User.objects.filter(pk=user_id)
-        if not user_exists.exists():
-            return Response(data={'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-        user_exists.first().delete()
-        return Response(data={'message': 'User deleted Successfully'}, status=status.HTTP_204_NO_CONTENT)
-
-
 class RestaurantViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated, IsAdminOrIsManager]
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         operation_description="List all restaurants",
@@ -177,7 +150,7 @@ class RestaurantViewSet(viewsets.ViewSet):
 
 
 class BookingViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated, IsAdminOrIsManager]
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         operation_description="List bookings based on date",
@@ -272,7 +245,7 @@ class BookingViewSet(viewsets.ViewSet):
 
 
 class ManagementViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated, IsAdminOrIsManager]
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         operation_description="Create a new manager for the restaurant",
@@ -303,9 +276,6 @@ class ManagementViewSet(viewsets.ViewSet):
             )
         },
     )
-    def update_manager(self, request):
-        pass
-
     def list_managers(self, request):
         managers = Manager.objects.all()
         serializer = ManagerSerializer(managers, many=True)
@@ -313,23 +283,36 @@ class ManagementViewSet(viewsets.ViewSet):
 
 
 class BookingCustomerViewSet(viewsets.ViewSet):
+    @swagger_auto_schema(
+        operation_description="Create booking",
+        operation_summary="Add booking",
+        request_body=BookingSerializer,
+        responses={
+            201: openapi.Response(
+                description='Booking Added Successfully',
+            ),
+            400: openapi.Response(
+                description='please fill the details',
+            )
+        },
+    )
     def create_booking_customer(self, request, *args, **kwargs):
-        booking_serializer = BookingCustomerSerializer(data=request.data)
+        booking_serializer = BookingSerializer(data=request.data)
         if booking_serializer.is_valid():
             booking_serializer.save()
             return Response({"message": "Booking Added Successfully", "status": status.HTTP_201_CREATED})
         return Response({"message": "please fill the details", "status": status.HTTP_400_BAD_REQUEST})
 
     def show_booking_customer(self, request):
-        customers_bookings = BookingCustomer.objects.all()
-        serializer = BookingCustomerSerializer(customers_bookings, many=True)
+        customers_bookings = Booking.objects.all()
+        serializer = BookingSerializer(customers_bookings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def cancel_booking_customer(self, request, rest_id, booking_id):
         restaurant = Restaurant.objects.get(pk=rest_id)
         if not restaurant.exists():
             return Response(data={'error': 'Restaurant not found'}, status=status.HTTP_404_NOT_FOUND)
-        customer_booking = BookingCustomer.objects.get(pk=booking_id, restaurant_id=rest_id)
+        customer_booking = Booking.objects.get(pk=booking_id, restaurant_id=rest_id)
         if not customer_booking.exists():
             return Response(data={'error': 'Customer Booking not found'}, status=status.HTTP_404_NOT_FOUND)
         customer_booking.status = 'cancelled'
