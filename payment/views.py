@@ -29,7 +29,7 @@ class PaymentViewSet(ViewSet):
 
         """
         # booking_id = data.get('booking_id')
-        # booking = Booking.objects.filter(id=booking_id).first()
+        # booking = Booking.objects.filter(id=booking_id, user=user).first()
         # if booking is None:
         #     return Response({"message": "Booking did not created yet"},
         #                     status=status.HTTP_404_NOT_FOUND)
