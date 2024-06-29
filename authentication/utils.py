@@ -36,6 +36,6 @@ def check_otp(data):
 
 def check_user(user):
     if user is None:
-        return ValidationError({'message': 'User not found!', 'ok': False})
+        raise ValidationError({"message": "User not found!", 'ok': False})
     if not user.is_verified:
-        return ValidationError({"message": "User is not verified!", "ok": False})
+        raise ValidationError({"message": "User is not verified!", "ok": False})

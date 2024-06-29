@@ -37,22 +37,30 @@ class UserViewSet(viewsets.ViewSet):
         data = request.data  # Post request
         obj_user = User.objects.filter(username=data['username']).first()  # Is there a user or not?
 
-        check_user(obj_user)
+        if obj_user and obj_user.is_verified:
+            return Response(
+                data={"message": "User already exists!", 'ok': False},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         serializer = UserSerializer(obj_user, data=data, partial=True) if obj_user else UserSerializer(data=data)
 
         if not serializer.is_valid():
             return Response(
                 data={"message": serializer.errors, 'ok': False},
-                status=status.HTTP_400_BAD_REQUEST)
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         validated_user = serializer.save()
         obj_create = OTP.objects.create(user_id=validated_user.id)
         obj_all = OTP.objects.filter(user_id=validated_user.id)
+
         if check_otp(obj_all):
             return Response(
                 data={"message": "Too many attempts try after 12 hours"},
-                status=status.HTTP_400_BAD_REQUEST)
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         obj_create.save()
         send_otp(obj_create)
         return Response(data={"message": {'otp_key': obj_create.otp_key}, "ok": True}, status=status.HTTP_201_CREATED)
@@ -99,7 +107,7 @@ class UserViewSet(viewsets.ViewSet):
                 status=status.HTTP_200_OK)
 
         return Response(
-            data={'message': 'invalid password', 'ok': False},
+            data={'message': 'User not found or password incorrect!', 'ok': False},
             status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
@@ -169,7 +177,8 @@ class ChangePasswordViewSet(viewsets.ViewSet):
 
             return Response(
                 data={'message': 'password successfully changed', 'ok': True},
-                status=status.HTTP_200_OK)
+                status=status.HTTP_200_OK
+            )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -198,23 +207,13 @@ class ResetPassword(viewsets.ViewSet):
         username = request.data.get('username')
         if not username:
             return Response(
-                data={"message": "Username is wrong!", "ok": False},
-                status=status.HTTP_400_BAD_REQUEST)
+                data={"message": "Please fill the blank!", "ok": False},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         user = User.objects.filter(username=username).first()
 
         check_user(user)  # it will check user
-
-        obj_all = OTP.objects.filter(user_id=user.id)
-        if not obj_all.exists():
-            return Response(
-                data={"message": "You did not Register yet!", 'ok': False},
-                status=status.HTTP_400_BAD_REQUEST)
-
-        if check_otp(obj_all):
-            return Response(
-                data={'message': 'Too many attempts try after 12 hours', 'ok': False},
-                status=status.HTTP_400_BAD_REQUEST)
-
         obj_create = OTP.objects.create(user_id=user.id)
         obj_create.save()
         send_otp(obj_create)
@@ -293,7 +292,7 @@ class ResetPassword(viewsets.ViewSet):
         user = obj_otp.user
         user.password = make_password(new_password)
         user.save(update_fields=['password'])
-        OTP.objects.filer(otp_token=token).delete()
+        OTP.objects.filter(otp_token=token).delete()
 
         return Response(
             data={'message': 'Password reset successful!', 'ok': True},
