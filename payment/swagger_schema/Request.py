@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import PaymentWithHistory
+from payment.models import PaymentWithHistory
 
 
 class PaymentSwagSerializer(serializers.ModelSerializer):

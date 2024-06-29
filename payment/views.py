@@ -5,7 +5,7 @@ from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
 from .serializers import PaymentSerializer
 #  from booking.models import Booking  # add after booking changed
-from .ddos import PaymentSwagSerializer
+from swagger_schema.Request import PaymentSwagSerializer
 
 
 class PaymentViewSet(ViewSet):
