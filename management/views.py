@@ -7,17 +7,113 @@ from restaurants.models import Restaurant
 from booking.models import Booking
 from restaurants.serializers import RestaurantSerializer
 from booking.serializers import BookingSerializer
-from .models import Manager
+from .models import Administrator
 from .serializers import \
     ManagerSerializer, DateRangeQuerySerializer, \
-    DateQuerySerializer
+    DateQuerySerializer, AdministratorSerializer
 from rest_framework.permissions import IsAuthenticated
 from .permissions import IsAdministrator, IsManager
 from drf_yasg import openapi
 
 
-class RestaurantViewSet(viewsets.ViewSet):
+class ManagementViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="Show the balance of a restaurant",
+        operation_summary="Retrieve restaurant balance",
+        responses={
+            200: openapi.Response(
+                description="Restaurant balance",
+            ),
+            404: openapi.Response(
+                description="Restaurant not found",
+            ),
+        },
+    )
+    def restaurant_balance(self, request, rest_id):
+        restaurant = Restaurant.objects.filter(pk=rest_id)
+        if not restaurant.exists():
+            return Response({'error': 'Restaurant not found'}, status=status.HTTP_404_NOT_FOUND)
+        balance = restaurant.first().balance
+        return Response({f'total balance: {balance}'}, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_description="Get statistics of bookings based on date range",
+        operation_summary="Get booking statistics based on date range",
+        manual_parameters=[
+            openapi.Parameter(
+                'start_date',
+                openapi.IN_QUERY,
+                description="Start date in YYYY-MM-DD format",
+                type=openapi.TYPE_STRING,
+                required=True
+            ),
+            openapi.Parameter(
+                'end_date',
+                openapi.IN_QUERY,
+                description="End date in YYYY-MM-DD format",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        responses={
+            200: openapi.Response(
+                description='Booking statistics',
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'total_bookings': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        'total_revenue': openapi.Schema(type=openapi.TYPE_NUMBER, format=openapi.FORMAT_FLOAT)
+                    }
+                )
+            ),
+            400: openapi.Response(
+                description='Invalid date format or date range'
+            )
+        },
+    )
+    def restaurant_statistics(self, request, rest_id):
+        query_serializer = DateRangeQuerySerializer(data=request.query_params)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        parsed_start_date = query_serializer.validated_data['start_date']
+        parsed_end_date = query_serializer.validated_data['end_date']
+
+        if parsed_start_date > parsed_end_date:
+            return Response({'error': 'Start date cannot be after end date'}, status=status.HTTP_400_BAD_REQUEST)
+
+        bookings = Booking.objects.filter(restaurants_id=rest_id,
+                                          booked_time__date__range=[parsed_start_date, parsed_end_date])
+        total_bookings = bookings.count()
+        total_revenue = bookings.aggregate(total=Sum('total_sum'))['total'] or 0
+
+        stats = {
+            'total_bookings': total_bookings,
+            'total_revenue': total_revenue,
+        }
+        return Response(stats, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_description="Delete the restaurant",
+        operation_summary="Delete restaurant",
+        responses={
+            204: openapi.Response(
+                description='Restaurant deleted successfully',
+            ),
+            404: openapi.Response(
+                description='Restaurant not found',
+            ),
+        },
+    )
+    def delete_restaurant(self, request, rest_id):
+        restaurant_exists = Restaurant.objects.filter(pk=rest_id)
+        if not restaurant_exists.exists():
+            return Response('Restaurant not found', status=status.HTTP_404_NOT_FOUND)
+        restaurant = restaurant_exists.first()
+        restaurant.delete()
+        return Response(data={"message": 'Restaurant deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
         operation_description="List all restaurants",
@@ -53,24 +149,38 @@ class RestaurantViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
-        operation_description="Delete the restaurant",
-        operation_summary="Delete restaurant",
+        operation_description="Create a new admin",
+        operation_summary="Add an admin",
+        request_body=AdministratorSerializer,
         responses={
-            204: openapi.Response(
-                description='Restaurant deleted successfully',
+            201: openapi.Response(
+                description='Administrator Added Successfully',
             ),
-            404: openapi.Response(
-                description='Restaurant not found',
-            ),
+            400: openapi.Response(
+                description='Invalid data',
+            )
         },
     )
-    def delete_restaurant(self, request, rest_id):
-        restaurant_exists = Restaurant.objects.filter(pk=rest_id)
-        if not restaurant_exists.exists():
-            return Response('Restaurant not found', status=status.HTTP_404_NOT_FOUND)
-        restaurant = restaurant_exists.first()
-        restaurant.delete()
-        return Response(data={"message": 'Restaurant deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+    def create_admin(self, request):
+        administrator_serializer = AdministratorSerializer(data=request.data)
+        if administrator_serializer.is_valid():
+            administrator_serializer.save()
+            return Response({"message": "Administrator Added Successfully", "status": status.HTTP_201_CREATED})
+        return Response({"message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
+        operation_description="List all employees",
+        operation_summary="Get all employees",
+        responses={
+            200: openapi.Response(
+                description='List of all employees',
+            )
+        },
+    )
+    def list_admins(self, request):
+        administrator = Administrator.objects.all()
+        serializer = AdministratorSerializer(administrator, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class AdministratorViewSet(viewsets.ViewSet):
@@ -186,86 +296,6 @@ class AdministratorViewSet(viewsets.ViewSet):
             return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
         booking_exists.first().delete()
         return Response({'message': 'Booking deleted Successfully'}, status=status.HTTP_204_NO_CONTENT)
-
-
-class ManagementViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
-
-    @swagger_auto_schema(
-        operation_description="Show the balance of a restaurant",
-        operation_summary="Retrieve restaurant balance",
-        responses={
-            200: openapi.Response(
-                description="Restaurant balance",
-            ),
-            404: openapi.Response(
-                description="Restaurant not found",
-            ),
-        },
-    )
-    def restaurant_balance(self, request, rest_id):
-        restaurant = Restaurant.objects.filter(pk=rest_id)
-        if not restaurant.exists():
-            return Response({'error': 'Restaurant not found'}, status=status.HTTP_404_NOT_FOUND)
-        balance = restaurant.first().balance
-        return Response({f'total balance: {balance}'}, status=status.HTTP_200_OK)
-
-    @swagger_auto_schema(
-        operation_description="Get statistics of bookings based on date range",
-        operation_summary="Get booking statistics based on date range",
-        manual_parameters=[
-            openapi.Parameter(
-                'start_date',
-                openapi.IN_QUERY,
-                description="Start date in YYYY-MM-DD format",
-                type=openapi.TYPE_STRING,
-                required=True
-            ),
-            openapi.Parameter(
-                'end_date',
-                openapi.IN_QUERY,
-                description="End date in YYYY-MM-DD format",
-                type=openapi.TYPE_STRING,
-                required=True
-            )
-        ],
-        responses={
-            200: openapi.Response(
-                description='Booking statistics',
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        'total_bookings': openapi.Schema(type=openapi.TYPE_INTEGER),
-                        'total_revenue': openapi.Schema(type=openapi.TYPE_NUMBER, format=openapi.FORMAT_FLOAT)
-                    }
-                )
-            ),
-            400: openapi.Response(
-                description='Invalid date format or date range'
-            )
-        },
-    )
-    def restaurant_statistics(self, request, rest_id):
-        query_serializer = DateRangeQuerySerializer(data=request.query_params)
-        if not query_serializer.is_valid():
-            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        parsed_start_date = query_serializer.validated_data['start_date']
-        parsed_end_date = query_serializer.validated_data['end_date']
-
-        if parsed_start_date > parsed_end_date:
-            return Response({'error': 'Start date cannot be after end date'}, status=status.HTTP_400_BAD_REQUEST)
-
-        bookings = Booking.objects.filter(restaurants_id=rest_id,
-                                          booked_time__date__range=[parsed_start_date, parsed_end_date])
-        total_bookings = bookings.count()
-        total_revenue = bookings.aggregate(total=Sum('total_sum'))['total'] or 0
-
-        stats = {
-            'total_bookings': total_bookings,
-            'total_revenue': total_revenue,
-        }
-        return Response(stats, status=status.HTTP_200_OK)
 
     # @swagger_auto_schema(
     #     operation_description="Create a new manager for the restaurant",

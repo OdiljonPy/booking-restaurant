@@ -1,12 +1,12 @@
 from django.urls import path
-from .views import RestaurantViewSet, AdministratorViewSet, ManagementViewSet
+from .views import AdministratorViewSet, ManagementViewSet
 
 urlpatterns = [
-    path('restaurants/', RestaurantViewSet.as_view({
+    path('restaurants/', ManagementViewSet.as_view({
         'get': 'list_restaurants',
     }), name='restaurant-list'),
 
-    path('restaurants/<int:rest_id>/', RestaurantViewSet.as_view({
+    path('restaurants/<int:rest_id>/', ManagementViewSet.as_view({
         'get': 'retrieve_restaurant', 'delete': 'delete_restaurant'
     }), name='restaurant-detail'),
 
