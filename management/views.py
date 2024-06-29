@@ -8,8 +8,8 @@ from django.utils.dateparse import parse_date
 from authentication.models import User
 from restaurants.models import Restaurant
 from booking.models import Booking
-from .models import Manager,Booking_costumer
-from .serializers import BookingCostumerSerializer,RestaurantSerializer, BookingSerializer, ManagerSerializer, DateRangeQuerySerializer, \
+from .models import Manager,Booking_costumer,Employee
+from .serializers import EmployeeSerializer,BookingCostumerSerializer,RestaurantSerializer, BookingSerializer, ManagerSerializer, DateRangeQuerySerializer, \
     DateQuerySerializer
 from payment.models import PaymentWithHistory
 from rest_framework.permissions import IsAuthenticated
@@ -305,6 +305,40 @@ class ManagementViewSet(viewsets.ViewSet):
     def list_managers(self, request):
         managers = Manager.objects.all()
         serializer = ManagerSerializer(managers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_description="Create a new employer for the restaurant",
+        operation_summary="Add a employer",
+        request_body=EmployeeSerializer,
+        responses={
+            201: openapi.Response(
+                description='Employer Added Successfully',
+            ),
+            400: openapi.Response(
+                description='Invalid data',
+            )
+        },
+    )
+    def create_employee(self, request):
+        employee_serializer = EmployeeSerializer(data=request.data)
+        if employee_serializer.is_valid():
+            employee_serializer.save()
+            return Response({"message": "Employee Added Successfully", "status": status.HTTP_201_CREATED})
+        return Response({"message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
+        operation_description="List all employees",
+        operation_summary="Get all employees",
+        responses={
+            200: openapi.Response(
+                description='List of all employees',
+            )
+        },
+    )
+    def list_employees(self, request):
+        employees = Employee.objects.all()
+        serializer = EmployeeSerializer(employees, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class BookingcostumerViewSet(viewsets.ViewSet):

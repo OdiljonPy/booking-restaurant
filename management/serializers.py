@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from booking.models import Booking
 from restaurants.models import Restaurant
-from .models import Manager, Booking_costumer
+from .models import Manager, Booking_costumer,Employee
 from authentication.models import User
 
 
@@ -21,7 +21,10 @@ class ManagerSerializer(serializers.ModelSerializer):
         model = Manager
         fields = ['user', 'title', 'phone_number', 'date_of_birth', 'hire_date', 'fire_date']
 
-
+class EmployeeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employee
+        fields = '__all__'
 
 
 class  BookingCostumerSerializer(serializers.ModelSerializer):
