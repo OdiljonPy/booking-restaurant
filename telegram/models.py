@@ -3,7 +3,7 @@ from authentication.validations import validate_uz_number
 
 
 class TelegramUser(models.Model):
-    telegram_id = models.IntegerField(default=0)
+    telegram_id = models.IntegerField()
     first_name = models.CharField(max_length=50, blank=True, null=True)
     last_name = models.CharField(max_length=50, blank=True, null=True)
     phone = models.CharField(max_length=14, validators=[validate_uz_number], blank=True, null=True)
