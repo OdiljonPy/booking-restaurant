@@ -1,18 +1,12 @@
 from django.db import models
 from datetime import datetime
-
+from booking.models import STATUS_CHOICES
 from authentication.models import User, validate_uz_number
 from django.utils import timezone
-from restaurants.models import Restaurant, RoomType, RestaurantRoom
-from booking.models import Occasion, OrderItems
+from restaurants.models import Restaurant, RestaurantRoom,RoomType
+from booking.models import  OrderItems,Occasion
 
-STATUS_CHOICES = [
-    ('1', 'created'),
-    ('2', 'paying'),
-    ('3', 'paid'),
-    ('4', 'booked'),
-    ('5', 'cancelled'),
-]
+
 
 
 class Manager(models.Model):
@@ -28,19 +22,27 @@ class Manager(models.Model):
         return self.user.username
 
 
-class BookingCustomer(models.Model):
-    author = models.CharField(max_length=100)
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+class Booking(models.Model):
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    restaurants = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     room = models.ForeignKey(RestaurantRoom, on_delete=models.CASCADE)
+
     number_of_people = models.IntegerField(default=1)
-    phone_number = models.CharField(max_length=11, validators=[validate_uz_number])
-    comment = models.TextField(default="No comment")
+    client_number = models.CharField(max_length=13)
+    client_name = models.CharField(max_length=120)
+
+    comment = models.TextField(blank=True, null=True)
+    # Shu yerda Occasion ochirib tashlansa xam booking ochmashi kerak
+    occasion = models.ForeignKey(Occasion, on_delete=models.SET_NULL, blank=True, null=True, default=1)
+
+    planed_from = models.DateTimeField(default=datetime.now)
+    planed_to = models.DateTimeField(default=datetime.now)
+
     booked_time = models.DateTimeField(auto_now_add=True)
-    planed_time = models.DateTimeField(default=datetime.now)
-    order_items = models.ForeignKey(OrderItems, on_delete=models.CASCADE)
-    paying_status = models.BooleanField(default=False)
+
+    order_items = models.ManyToManyField(OrderItems, blank=True)
     status = models.CharField(choices=STATUS_CHOICES, default=1, max_length=10)
     total_sum = models.PositiveIntegerField(default=0)
 
     def __str__(self):
-        return self.restaurant.name
+        return self.client_name
