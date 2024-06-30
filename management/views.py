@@ -115,20 +115,6 @@ class ManagementViewSet(viewsets.ViewSet):
         return Response(data={"message": 'Restaurant deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
-        operation_description="List all restaurants",
-        operation_summary="Get all restaurants",
-        responses={
-            200: openapi.Response(
-                description='List of all restaurants',
-            )
-        },
-    )
-    def list_restaurants(self, request):
-        restaurants = Restaurant.objects.all()
-        serializer = RestaurantSerializer(restaurants, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @swagger_auto_schema(
         operation_description="Retrieve a restaurant detail",
         operation_summary="Get restaurant details",
         responses={
@@ -295,37 +281,3 @@ class AdministratorViewSet(viewsets.ViewSet):
             return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
         booking_exists.first().delete()
         return Response({'message': 'Booking deleted Successfully'}, status=status.HTTP_204_NO_CONTENT)
-
-    # @swagger_auto_schema(
-    #     operation_description="Create a new manager for the restaurant",
-    #     operation_summary="Add a manager",
-    #     request_body=ManagerSerializer,
-    #     responses={
-    #         201: openapi.Response(
-    #             description='Manager Added Successfully',
-    #         ),
-    #         400: openapi.Response(
-    #             description='Invalid data',
-    #         )
-    #     },
-    # )
-    # def create_manager(self, request):
-    #     manager_serializer = ManagerSerializer(data=request.data)
-    #     if manager_serializer.is_valid():
-    #         manager_serializer.save()
-    #         return Response({"message": "Manager Added Successfully", "status": status.HTTP_201_CREATED})
-    #     return Response({"message": "Invalid data"}, status.HTTP_400_BAD_REQUEST)
-    #
-    # @swagger_auto_schema(
-    #     operation_description="List all restaurant managers",
-    #     operation_summary="Get all managers",
-    #     responses={
-    #         200: openapi.Response(
-    #             description='List of all managers',
-    #         )
-    #     },
-    # )
-    # def list_managers(self, request):
-    #     managers = Manager.objects.all()
-    #     serializer = ManagerSerializer(managers, many=True)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
