@@ -259,7 +259,7 @@ class AdministratorViewSet(viewsets.ViewSet):
         if not booking_exists.exists():
             return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
         booking = booking_exists.first()
-        booking.status = False
+        booking.status = 5
         booking.save(update_fields=['status'])
         return Response({'status': 'Booking cancelled'}, status=status.HTTP_200_OK)
 

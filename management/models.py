@@ -21,9 +21,9 @@ class Manager(models.Model):
 
 class Administrator(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, related_name='employees')
+    manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, related_name='employees')
     phone_number = models.CharField(max_length=14, validators=[validate_uz_number])
-    date_of_birth = models.DateField(defaut=datetime.now)
+    date_of_birth = models.DateField(default=datetime.now)
     hire_date = models.DateField(default=datetime.now)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
