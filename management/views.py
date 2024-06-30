@@ -2,7 +2,6 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.db.models import Sum
-from authentication.models import User
 from restaurants.models import Restaurant
 from booking.models import Booking
 from restaurants.serializers import RestaurantSerializer
