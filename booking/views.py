@@ -3,15 +3,17 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
 
 from authentication.models import User
-from restaurants.models import RestaurantRoom
+from restaurants.models import RestaurantRoom, Restaurant
 from booking.models import Booking, Occasion, Order
+
 from booking.serializers import BookingSerializer, OccasionSerializer, PayingSerializer
 from booking.dtos.requests import BookingRequestSerializer
-from booking.dtos.responses import BookingResponseSerializer
-from datetime import datetime, timedelta
+from booking.dtos.responses import BookingResponseSerializer, OccasionResponseSerializer
+
+from django.utils.dateparse import parse_datetime
+from django.utils.timezone import make_naive
 
 
 class BookingViewSet(ViewSet):
@@ -25,18 +27,49 @@ class BookingViewSet(ViewSet):
     def create_booking(self, request):
         data = request.data
         room = RestaurantRoom.objects.filter(id=request.data['room']).first()
-
         if not room:
-            return Response({"message": "Room not found", "ok": False, "status": status.HTTP_400_BAD_REQUEST})
+            return Response(data={"error": "Room not found", "ok": False}, status=status.HTTP_400_BAD_REQUEST)
+
+        if data['number_of_people'] > room.people_number:
+            return Response(
+                {"error": f"Number of people cannot be greater than the room number. Max:{room.people_number}",
+                 'ok': False},
+                status=status.HTTP_400_BAD_REQUEST)
+
+        # Parse and make the datetimes naive
+        planed_from = parse_datetime(data['planed_from'])
+        planed_to = parse_datetime(data['planed_to'])
+        if not (planed_from and planed_to and planed_to > planed_from):
+            return Response({"error": "Invalid datetime format", "ok": False}, status=status.HTTP_400_BAD_REQUEST)
+        planed_from = make_naive(planed_from)
+        planed_to = make_naive(planed_to)
+
+        bookings = Booking.objects.filter(
+            room=room,
+            planed_from__range=(planed_from, planed_to),
+            planed_to__gte=planed_from,
+            planed_from__lt=planed_to,
+
+        )
+        print(bookings.first())
+        if bookings.exists():
+            return Response({"error": "This room already booked", 'ok': False}, status=status.HTTP_400_BAD_REQUEST)
 
         data['restaurants'] = room.restaurant.id
         data['room'] = room.id
         data['author'] = User.objects.filter(id=request.data['author']).first().id
+        # data['author'] = User.objects.filter(id=request.user.id).first().id
+
+        # Update the data with naive datetimes
+        data['planed_from'] = planed_from
+        data['planed_to'] = planed_to
+
         booking_serializer = BookingSerializer(data=data)
 
         if booking_serializer.is_valid():
             booking_serializer.save()
-            return Response({"message": "Booking Added Successfully", "status": status.HTTP_201_CREATED})
+            return Response(data={"data": booking_serializer.data, "message": "Booking Added Successfully",
+                                  "status": status.HTTP_201_CREATED})
         else:
             print(booking_serializer.errors)
             return Response({"message": "Please fill the required details", "errors": booking_serializer.errors,
@@ -45,12 +78,15 @@ class BookingViewSet(ViewSet):
     @swagger_auto_schema(
         operation_summary='Show bookings',
         operation_description='Show bookings list',
-        responses={200: BookingSerializer()},
+        responses={200: BookingResponseSerializer()},
         tags=['Booking']
     )
-    def show_bookings(self, request):
-        queryset = Booking.objects.all()
-        bookings = BookingSerializer(queryset, many=True).data
+    def show_bookings(self, request, restaurant_pk):
+        # user = request.user
+        # restaurant = Restaurant.objects.filter(id=user.restaurant.id).first()
+        restaurant = Restaurant.objects.filter(id=restaurant_pk).first()
+        queryset = Booking.objects.filter(restaurants=restaurant)
+        bookings = BookingResponseSerializer(queryset, many=True).data
         return Response(data={'bookings': bookings}, status=status.HTTP_200_OK)
 
 
@@ -60,7 +96,6 @@ class BookingActionsViewSet(ViewSet):
         operation_description='Show booking details',
         responses={200: BookingSerializer()},
         tags=['Booking']
-
     )
     def detail_booking(self, request, pk):
         booking_detail = Booking.objects.filter(id=pk).first()
@@ -88,15 +123,26 @@ class BookingActionsViewSet(ViewSet):
         responses={200: BookingSerializer()},
         tags=['Booking']
     )
+    # TODO: Need to be optimize with set_status (url must be changed)
     def cancel_booking(self, request, pk):
         booking = Booking.objects.filter(id=pk).first()
         if not booking:
             return Response({"message": "Booking not found", "ok": False, "status": status.HTTP_400_BAD_REQUEST})
-        booking.status = 5
-        booking.save(update_fields=['status'])
+        serializer = BookingSerializer(booking, data={"status": "5"}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def set_status(self, request, pk):
-        pass
+        booking = Booking.objects.filter(id=pk).first()
+        if not booking:
+            return Response({"message": "Booking not found", "ok": False, "status": status.HTTP_400_BAD_REQUEST})
+        serializer = BookingSerializer(booking, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Booking deleted',
@@ -109,7 +155,7 @@ class BookingActionsViewSet(ViewSet):
         if booking_data:
             booking_data.delete()
             return Response({"message": "Product delete Sucessfully", 'ok': True, "status": status.HTTP_204_NO_CONTENT})
-        return Response({"message": "Product data not found", "status": status.HTTP_400_BAD_REQUEST})
+        return Response(data={"message": "Product data not found", "ok": False}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class OrderViewSet(ViewSet):
@@ -123,7 +169,7 @@ class OccasionViewSet(ViewSet):
     @swagger_auto_schema(
         operation_summary='Create Occasion',
         operation_description='Occasion will be created',
-        responses={200: OccasionSerializer()},
+        responses={201: OccasionResponseSerializer()},
         request_body=OccasionSerializer,
         tags=['Occasion']
     )
@@ -137,18 +183,18 @@ class OccasionViewSet(ViewSet):
     @swagger_auto_schema(
         operation_summary='Occasions list',
         operation_description='Occasions list',
-        responses={200: OccasionSerializer()},
+        responses={200: OccasionResponseSerializer()},
         tags=['Occasion']
     )
     def list_occasions(self, request):
         queryset = Occasion.objects.all()
-        occasions = OccasionSerializer(queryset, many=True).data
+        occasions = OccasionResponseSerializer(queryset, many=True).data
         return Response(data={'occasions': occasions, 'ok': True}, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
         operation_summary='Occasion data edit',
         operation_description='Occasion details will be updated',
-        responses={200: OccasionSerializer()},
+        responses={202: OccasionResponseSerializer()},
         request_body=OccasionSerializer,
         tags=['Occasion']
     )
@@ -157,7 +203,7 @@ class OccasionViewSet(ViewSet):
         if not occasion:
             return Response(data={"error": "This occasion doesn't found", "ok": False},
                             status=status.HTTP_400_BAD_REQUEST)
-        serializer = OccasionSerializer(occasion, data=request.data, partial=True)
+        serializer = OccasionResponseSerializer(occasion, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(data={"data": serializer.data, "message": "data changed", "ok": True},
@@ -167,7 +213,7 @@ class OccasionViewSet(ViewSet):
     @swagger_auto_schema(
         operation_summary='Occasion deleted',
         operation_description='Occasion will be deleted',
-        responses={200: OccasionSerializer()},
+        responses={204: "Occasion Deleted Successfully", 400: "This occasion doesn't found"},
         tags=['Occasion']
     )
     def delete(self, request, pk):

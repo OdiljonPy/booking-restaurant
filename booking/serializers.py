@@ -26,6 +26,12 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = '__all__'
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        order_items = instance.order_items
+        data['order_items'] = OrderItemsSerializer(order_items, many=True).data
+        return data
+
 
 class BookingSerializer(serializers.ModelSerializer):
     # order_items = OrderItemsSerializer(many=True)
@@ -35,11 +41,11 @@ class BookingSerializer(serializers.ModelSerializer):
         fields = ['author', 'room', "restaurants", 'number_of_people', 'client_number', 'client_name', 'planed_from',
                   'planed_to', "occasion", "status"]
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        order_items = instance.order_items.all()
-        data['order_items'] = OrderItemsSerializer(order_items, many=True).data
-        return data
+    # def to_representation(self, instance):
+    #     data = super().to_representation(instance)
+    #     order_items = instance.order_items.all()
+    #     data['orders'] = OrderSerializer(order_items, many=True).data
+    #     return data
 
     # def save(self, **kwargs):
     #     request = self.context['request']
