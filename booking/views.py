@@ -9,10 +9,8 @@ from authentication.models import User
 from restaurants.models import RestaurantRoom
 from booking.models import Booking, Occasion, Order
 from booking.serializers import BookingSerializer, OccasionSerializer, PayingSerializer
-from booking.dtos.requests import BookingRequestSerializer, OccasionRequestSerializer, PayingRequestSerializer, \
-    OrderItemsRequestSerializer
-from booking.dtos.responses import BookingResponseSerializer, OrderItemsResponseSerializer, PayingResponseSerializer, \
-    OccasionResponseSerializer
+from booking.dtos.requests import BookingRequestSerializer
+from booking.dtos.responses import BookingResponseSerializer
 from datetime import datetime, timedelta
 
 
@@ -114,6 +112,12 @@ class BookingActionsViewSet(ViewSet):
         return Response({"message": "Product data not found", "status": status.HTTP_400_BAD_REQUEST})
 
 
+class OrderViewSet(ViewSet):
+    def create_order(self, request):
+        queryset = Order.objects.create(request.data)
+        queryset.save()
+
+
 class OccasionViewSet(ViewSet):
 
     @swagger_auto_schema(
@@ -121,39 +125,57 @@ class OccasionViewSet(ViewSet):
         operation_description='Occasion will be created',
         responses={200: OccasionSerializer()},
         request_body=OccasionSerializer,
-        tags=['Booking']
+        tags=['Occasion']
     )
     def create_occasion(self, request):
-        queryset = Occasion.objects.create(request.data)
-        queryset.save()
-        return Response(data={'id': queryset.pk, 'message': 'Your occasion has been created'}, )
+        data = request.data
+        queryset = OccasionSerializer(data=data)
+        if queryset.is_valid():
+            queryset.save()
+        return Response(data={'data': queryset.data, 'ok': True}, status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(
         operation_summary='Occasions list',
         operation_description='Occasions list',
         responses={200: OccasionSerializer()},
-        tags=['Booking']
+        tags=['Occasion']
     )
     def list_occasions(self, request):
         queryset = Occasion.objects.all()
         occasions = OccasionSerializer(queryset, many=True).data
-        return Response(data={'occasions': occasions}, status=status.HTTP_200_OK)
+        return Response(data={'occasions': occasions, 'ok': True}, status=status.HTTP_200_OK)
 
-
-class OccasionActionsViewSet(ViewSet):
     @swagger_auto_schema(
         operation_summary='Occasion data edit',
         operation_description='Occasion details will be updated',
         responses={200: OccasionSerializer()},
-        tags=['Booking']
+        request_body=OccasionSerializer,
+        tags=['Occasion']
     )
     def edit_occasion(self, request, pk):
         occasion = Occasion.objects.filter(id=pk).first()
-        if occasion:
-            occasion.name = request.data['occasion_name']
-            occasion.save(update_fields=['occasion_name'])
-            return Response(data={"message": f"{occasion} data was changed"}, status=status.HTTP_200_OK)
-        return Response(data={"message": "Your data doesn't found"}, status=status.HTTP_400_BAD_REQUEST)
+        if not occasion:
+            return Response(data={"error": "This occasion doesn't found", "ok": False},
+                            status=status.HTTP_400_BAD_REQUEST)
+        serializer = OccasionSerializer(occasion, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data={"data": serializer.data, "message": "data changed", "ok": True},
+                            status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
+        operation_summary='Occasion deleted',
+        operation_description='Occasion will be deleted',
+        responses={200: OccasionSerializer()},
+        tags=['Occasion']
+    )
+    def delete(self, request, pk):
+        occasion = Occasion.objects.filter(id=pk).first()
+        if not occasion:
+            return Response({"error": "This occasion doesn't found", "ok": False}, status=status.HTTP_400_BAD_REQUEST)
+        occasion.delete()
+        return Response(data={"message": "Deleted Successfully", 'ok': True, "status": status.HTTP_204_NO_CONTENT})
 
 
 def calculate_free_times(room_id):

@@ -24,7 +24,7 @@ class OrderItemsSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
-        fields = ''
+        fields = '__all__'
 
 
 class BookingSerializer(serializers.ModelSerializer):
