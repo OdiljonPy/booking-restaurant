@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Manager, Administrator
-from authentication.models import User
 
 
 class ManagerSerializer(serializers.ModelSerializer):
@@ -12,7 +11,8 @@ class ManagerSerializer(serializers.ModelSerializer):
 class AdministratorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Administrator
-        fields = '__all__'
+        fields = ['user', 'phone_number', 'date_of_birth', 'hire_date']
+
 
 
 class DateQuerySerializer(serializers.Serializer):

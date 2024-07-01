@@ -1,10 +1,9 @@
 from django.db import models
 from datetime import datetime
-from booking.models import STATUS_CHOICES
 from authentication.models import User, validate_uz_number
-from django.utils import timezone
-from restaurants.models import Restaurant, RestaurantRoom, RoomType
-from booking.models import OrderItems, Occasion
+from restaurants.models import Restaurant
+
+
 
 
 class Manager(models.Model):
