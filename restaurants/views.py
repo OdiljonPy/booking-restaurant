@@ -3,7 +3,6 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from .models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom, RestaurantMenu, Comment, MenuType
 from .serializers import (CategorySerializer, RestaurantSerializer,
@@ -12,6 +11,8 @@ from .serializers import (CategorySerializer, RestaurantSerializer,
                           CategoryCreateSerializer, RoomTypeCreateSerializer, MenuTypeCreateSerializer,
                           MenuTypeSerializer, CommentCreateSerializer)
 
+from .error_codes import ErrorCodes
+from .exception import CustomApiException
 
 # TODO: need to write filter for restaurant and change comment api
 class RestaurantFilterViewSet(ViewSet):
@@ -27,58 +28,59 @@ class RestaurantFilterViewSet(ViewSet):
         tags=['Restaurant']
     )
     def show_restaurant(self, request):
-        if request.user.is_authenticated:
-            restaurant_info = Restaurant.objects.all()
+
+        restaurant_info = Restaurant.objects.all()
+        if restaurant_info:
             restaurant_serialize = RestaurantSerializer(restaurant_info, many=True).data
             return Response(data={'result': restaurant_serialize}, status=status.HTTP_200_OK)
-        return Response(data={'result': 'Authentication credentials does not provided'},
-                        status=status.HTTP_400_BAD_REQUEST)
+        raise CustomApiException(error_code=2)
 
 
 class RestaurantCategoryViewSet(ViewSet):
 
     @swagger_auto_schema(
-        operation_description="Create Restaurant",
-        operation_summary="Create Restaurant",
+        operation_description="Create Restaurant category",
+        operation_summary="Create Restaurant category",
         request_body=CategoryCreateSerializer,
-        responses={201: CategoryCreateSerializer()},
+        responses={201: CategoryCreateSerializer(), 400: 'Bad Request'},
         tags=['Restaurant']
     )
     def create_category(self, request):
-        category_serializer = CategoryCreateSerializer(data=request.data)
-        if request.user.is_authenticated and category_serializer.is_valid():
-            category_serializer.save()
-            return Response(data={"result": "Category created successfully"}, status=status.HTTP_201_CREATED)
-        return Response(data={"result": "Authentication credentials does not provided or Invalid request"},
-                        status=status.HTTP_400_BAD_REQUEST)
+        serializer = CategoryCreateSerializer(data=request.data)
+        if request.user.is_authenticated and serializer.is_valid():
+            serializer.save()
+            return Response(data={"result": serializer.data, 'ok': True}, status=status.HTTP_201_CREATED)
+        return Response(
+            data={"result": f"Authentication credentials does not provided or {serializer.errors}", 'ok': False},
+            status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary='Show categories',
         operation_description='Show Restaurant categories list',
-        responses={200: CategorySerializer()},
+        responses={200: CategorySerializer(), 404: 'Not Found'},
         tags=['Restaurant']
     )
     def restaurant_category(self, request):
         category = RestaurantCategory.objects.all()
-        category_serialize = CategorySerializer(category, many=True).data
-        if category_serialize.is_valid():
-            return Response(data={"result": category_serialize}, status=status.HTTP_200_OK)
-        return Response(data={'result': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
+        if category:
+            serializer = CategorySerializer(category, many=True)
+            return Response(data={"result": serializer.data, 'ok': True}, status=status.HTTP_200_OK)
+        return Response(data={'result': 'Category does not exist', 'ok': False}, status=status.HTTP_404_NOT_FOUND)
 
     @swagger_auto_schema(
         operation_summary='Delete Category',
         operation_description='Delete Restaurant Category',
-        responses={204: 'Category successfully deleted'},
+        responses={204: 'Category successfully deleted', 400: 'Bad Request'},
         tags=['Restaurant']
     )
     def delete_category(self, request, pk):
         category = RestaurantCategory.objects.filter(pk=pk).first()
-        if category and request.user.is_authenticated:
+        if request.user.is_authenticated and category:
             message = f"{category} was deleted successfully"
             category.delete()
-            return Response(data={"result": message}, status=status.HTTP_204_NO_CONTENT)
+            return Response(data={"result": message, 'ok': True}, status=status.HTTP_204_NO_CONTENT)
         return Response(data={"result": "Category doesn't exist or authentication credentials does not provided"},
-                        status=status.HTTP_404_NOT_FOUND)
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class RestaurantViewSet(ViewSet):

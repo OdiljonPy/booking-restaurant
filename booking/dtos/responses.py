@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from booking.models import Booking, Occasion, OrderItems
-from booking.serializers import OrderItemsSerializer
+from booking.serializers import OrderItemsSerializer, OrderSerializer
 
 
 # INFO: This serializers used on swaggers
@@ -25,14 +25,14 @@ class BookingResponseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = ['author', "restaurants", 'room', 'number_of_people', 'client_number', 'client_name', 'planed_from',
-                  'planed_to', "occasion", "status"]
+        fields = ['id', 'author', "restaurants", 'room', 'number_of_people', 'client_number', 'client_name',
+                  'planed_from', 'planed_to', "occasion", "status"]
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        order_items = instance.order_items.all()
-        data['order_items'] = OrderItemsSerializer(order_items, many=True).data
-        return data
+    # def to_representation(self, instance):
+    #     data = super().to_representation(instance)
+    #     order_items = instance.order_items.all()
+    #     data['orders'] = OrderSerializer(order_items, many=True).data
+    #     return data
 
     # def save(self, **kwargs):
     #     request = self.context['request']
@@ -45,7 +45,7 @@ class BookingResponseSerializer(serializers.ModelSerializer):
 class OccasionResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Occasion
-        fields = ['name', ]
+        fields = ['id', 'name', ]
 
 
 class PayingResponseSerializer(serializers.ModelSerializer):
