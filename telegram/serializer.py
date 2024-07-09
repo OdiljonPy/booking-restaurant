@@ -20,11 +20,6 @@ class TGRestaurantCategorySerializer(serializers.ModelSerializer):  # Restaurant
         model = RestaurantCategory
         fields = ['id', 'name']
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['Restaurants'] = TGRestaurantSerializer(Restaurant.objects.filter(category_id=instance.id), many=True).data
-        return data
-
 
 class TGRoomTypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,19 +30,13 @@ class TGRoomTypeSerializer(serializers.ModelSerializer):
 class TGRestaurantRoomSerializer(serializers.ModelSerializer):
     class Meta:
         model = RestaurantRoom
-        fields = ['id', 'name', 'description', 'pictures']
+        fields = ['id', 'name', 'description']
 
 
 class TGMenuTypesSerializer(serializers.ModelSerializer):
     class Meta:
         model = MenuType
         fields = ['id', 'name']
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['restaurants'] = TGRestaurantSerializer(Restaurant.objects.filter(restaurant_id=instance.id),
-                                                     many=True).data
-        return data
 
 
 class TGRestaurantMenuSerializer(serializers.ModelSerializer):
