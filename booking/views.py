@@ -159,12 +159,27 @@ class BookingActionsViewSet(ViewSet):
 
 
 class OrderViewSet(ViewSet):
+    @swagger_auto_schema(
+        operation_summary='Show orders',
+        operation_description='Show orders',
+        responses={200: OrderSerializer()},
+        tags=['Order']
+
+    )
     def list_order(self, request, pk_restaurnat):
         orders = Order.objects.filter(restaurnat_id=pk_restaurnat)
         if orders:
             return Response(data={'data': orders}, status=status.HTTP_200_OK)
         return Response({"message": "Order not found", "ok": False}, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+        operation_summary='Create an order',
+        operation_description='Create an order',
+        responses={200: OrderSerializer()},
+        request_body=OrderSerializer(),
+        tags=['Order']
+
+    )
     def create_order(self, request):
         data = request.data
         queryset = OrderSerializer(data=data)
@@ -173,12 +188,26 @@ class OrderViewSet(ViewSet):
             return Response(data={'data': queryset.data, 'ok': True}, status=status.HTTP_201_CREATED)
         return Response(queryset.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+        operation_summary='Order detail',
+        operation_description='An order detail',
+        responses={200: OrderSerializer()},
+        tags=['Order']
+    )
     def detail_order(self, request, pk):
         order = Order.objects.filter(id=pk).first()
         if not order:
             return Response({"message": "Order not found", "ok": False}, status=status.HTTP_400_BAD_REQUEST)
         return Response(data={'data': order.data, 'ok': True}, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        operation_summary='Update an order',
+        operation_description='An order detail update',
+        responses={200: OrderSerializer()},
+        request_body=OrderSerializer(),
+        tags=['Order']
+
+    )
     def edit_order(self, request, pk):
         order = Order.objects.filter(id=pk).first()
         if not order:
@@ -188,6 +217,20 @@ class OrderViewSet(ViewSet):
             order.save()
             return Response(data={'data': order.data, 'ok': True}, status=status.HTTP_200_OK)
         return Response(order.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
+        operation_summary='Delete an order',
+        operation_description='An order delete',
+        responses={204: OrderSerializer()},
+        tags=['Order']
+
+    )
+    def delete_order(self, request, pk):
+        order = Order.objects.filter(id=pk).first()
+        if not order:
+            return Response({"message": "Order not found", "ok": False}, status=status.HTTP_400_BAD_REQUEST)
+        order.delete()
+        return Response({"message": 'Order deleted Successfully', 'ok': True}, status=status.HTTP_204_NO_CONTENT)
 
 
 class OccasionViewSet(ViewSet):

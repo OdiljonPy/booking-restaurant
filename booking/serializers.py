@@ -1,9 +1,5 @@
 from rest_framework import serializers
-from rest_framework.serializers import ModelSerializer
-
-from authentication.models import User
 from .models import Booking, Occasion, OrderItems, Order
-from restaurants.serializers import MenuSerializer
 
 
 class OrderItemsSerializer(serializers.ModelSerializer):
@@ -24,7 +20,7 @@ class OrderItemsSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ['room', 'author', 'order_items']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
