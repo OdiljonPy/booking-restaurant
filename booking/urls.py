@@ -12,5 +12,6 @@ urlpatterns = [
     path('occasions/', OccasionViewSet.as_view(
         {'get': 'list_occasions', 'post': 'create_occasion', })),
     path('occasions/<int:pk>/', OccasionViewSet.as_view({'patch': 'edit_occasion', 'delete': 'delete'})),
-    path('order/', OrderViewSet.as_view({'get': '', 'post': ''}))
+    path('<int:restaurant_pk>/order/', OrderViewSet.as_view({'get': 'list_order', 'post': 'create_order'})),
+    path('<int:restaurant_pk>/order/<int:pk>/', OrderViewSet.as_view({'get': 'detail_order', 'patch': 'edit_order'})),
 ]

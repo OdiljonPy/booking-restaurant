@@ -8,7 +8,7 @@ from authentication.models import User
 from restaurants.models import RestaurantRoom, Restaurant
 from booking.models import Booking, Occasion, Order
 
-from booking.serializers import BookingSerializer, OccasionSerializer, PayingSerializer
+from booking.serializers import BookingSerializer, OccasionSerializer, PayingSerializer, OrderSerializer
 from booking.dtos.requests import BookingRequestSerializer
 from booking.dtos.responses import BookingResponseSerializer, OccasionResponseSerializer
 
@@ -159,9 +159,35 @@ class BookingActionsViewSet(ViewSet):
 
 
 class OrderViewSet(ViewSet):
+    def list_order(self, request, pk_restaurnat):
+        orders = Order.objects.filter(restaurnat_id=pk_restaurnat)
+        if orders:
+            return Response(data={'data': orders}, status=status.HTTP_200_OK)
+        return Response({"message": "Order not found", "ok": False}, status=status.HTTP_400_BAD_REQUEST)
+
     def create_order(self, request):
-        queryset = Order.objects.create(request.data)
-        queryset.save()
+        data = request.data
+        queryset = OrderSerializer(data=data)
+        if queryset.is_valid():
+            order = queryset.save()
+            return Response(data={'data': queryset.data, 'ok': True}, status=status.HTTP_201_CREATED)
+        return Response(queryset.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def detail_order(self, request, pk):
+        order = Order.objects.filter(id=pk).first()
+        if not order:
+            return Response({"message": "Order not found", "ok": False}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'data': order.data, 'ok': True}, status=status.HTTP_200_OK)
+
+    def edit_order(self, request, pk):
+        order = Order.objects.filter(id=pk).first()
+        if not order:
+            return Response({"message": "Order not found", "ok": False}, status=status.HTTP_400_BAD_REQUEST)
+        order = OrderSerializer(order, data=request.data)
+        if order.is_valid():
+            order.save()
+            return Response(data={'data': order.data, 'ok': True}, status=status.HTTP_200_OK)
+        return Response(order.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class OccasionViewSet(ViewSet):
