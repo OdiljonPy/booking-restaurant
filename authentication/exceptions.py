@@ -6,4 +6,4 @@ class BadRequestException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
 
     def __init__(self, detail=None):
-        self.detail = {"error": detail, "ok": False}
+        self.detail = {"message": detail, "ok": False}

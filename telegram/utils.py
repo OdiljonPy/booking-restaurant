@@ -1,11 +1,11 @@
 import requests
-from config.settings import TELEGRAM_API_URL, BOT_TOKEN, CHANNEL_ID
+from django.conf import settings
 
 
 def telegram_add(telegramuser):
-    message = """Successfully!!!\ntelegram_id: {}\nfirst_name: {}\nlast_name: {}\nphone: {}\nusername: {}""".format(
-        telegramuser.telegram_id,
+    message = ("""Successfully!!!\ntelegram_id: {}\nfirst_name: {}\nlast_name: {}\nphone_number: {}\nusername: {}""".format(
+        telegramuser.user_id,
         telegramuser.first_name,
         telegramuser.last_name,
-        telegramuser.phone, telegramuser.username)
-    requests.get(TELEGRAM_API_URL.format(BOT_TOKEN, message, CHANNEL_ID))
+        telegramuser.phone_number, telegramuser.username))
+    requests.get(settings.TELEGRAM_API_URL.format(settings.BOT_TOKEN, message, settings.CHANNEL_ID))

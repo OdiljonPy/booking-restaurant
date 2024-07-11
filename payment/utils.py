@@ -45,10 +45,12 @@ def mask_pan(pan):
     return covered_pan
 
 
-def mask_user(username):
-    first_six = username[:6]
-    middle_five = '*' * 5
-    last_two = username[-2:]
-    covered_username = first_six + middle_five + last_two
-    return covered_username
+def fine(amount):
+    if amount > 500000:  # hozircha shunday, restaurantni talabiga qarab o'zgaradi
+        return_fine = 10  # foizda
+    else:
+        return_fine = 15  # foizda
+    amount = amount * (100 - return_fine) / 100
+
+    return amount
 

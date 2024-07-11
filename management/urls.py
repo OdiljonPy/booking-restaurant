@@ -20,6 +20,7 @@ urlpatterns = [
     path('restaurants/<int:rest_id>/bookings/<int:booking_id>/', ManagementViewSet.as_view({
         'get': 'retrieve_booking', 'put': 'cancel_booking', 'delete': 'delete_booking'
     }), name='restaurant-bookings'),
+
     path('restaurants/<int:rest_id>/managers/admins/', ManagementViewSet.as_view({'post': 'create_admin'})),
     path('restaurants/<int:rest_id>/managers/admins/<int:admin_id>/',
          ManagementViewSet.as_view({'delete': 'delete_admin'}))
