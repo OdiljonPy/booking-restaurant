@@ -52,7 +52,7 @@ class RoomTypeCreateSerializer(ModelSerializer):
 class RoomSerializer(ModelSerializer):
     class Meta:
         model = RestaurantRoom
-        fields = ['id', 'name', 'description', 'restaurant', 'pictures', 'people_number', 'room_type']
+        fields = ['id', 'name', 'description', 'restaurant', 'people_number', 'room_type']
 
 
 class RoomCreateSerializer(ModelSerializer):
