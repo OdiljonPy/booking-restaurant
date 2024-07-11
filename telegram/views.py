@@ -2,11 +2,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from drf_yasg.utils import swagger_auto_schema
-from .serializer import TelegramUserSerializer, RestSerializer, ResCategorySerializer, RestaurantRoomSerializer, \
-    RoomsTypeSerializer, MenuTypesSerializer, RestaurantMenuSerializer
+from .serializer import TelegramUserSerializer, TGRestaurantSerializer, TGRestaurantMenuSerializer, \
+    TGRoomTypeSerializer
 from .utils import telegram_add
 from .models import TelegramUser
-from restaurants.models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom, RestaurantMenu, MenuType
+from restaurants.models import Restaurant, RoomType, RestaurantMenu
 
 
 class TelegramUserViewSet(ViewSet):
@@ -19,67 +19,52 @@ class TelegramUserViewSet(ViewSet):
     )
     def create(self, request):
         data = request.data
-        phone = TelegramUser.objects.filter(phone=data.get('phone')).first()
-        user = TelegramUser.objects.filter(telegram_id=data.get('telegram_id')).first()
+        user = TelegramUser.objects.filter(user_id=data.get('user_id')).first()
         if not user:
-            if not phone:
-                serializer = TelegramUserSerializer(data=data)
-                if serializer.is_valid():
-                    serializer.save()
-                    obj = TelegramUser.objects.create(telegram_id=data['telegram_id'], first_name=data['first_name'],
-                                                      last_name=data['last_name'], phone=data['phone'],
-                                                      username=data['username'])
-                    obj.save()
-                    telegram_add(obj)
-                    return Response('User created', status=status.HTTP_201_CREATED)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            return Response(data={"message": "This phone number already exists"}, status=status.HTTP_400_BAD_REQUEST)
+            serializer = TelegramUserSerializer(data=data)
+            if serializer.is_valid():
+                obj = serializer.save()
+                telegram_add(obj)
+                return Response('User created', status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response('User already exists', status=status.HTTP_400_BAD_REQUEST)
 
 
 class RestaurantViewSet(ViewSet):
     @swagger_auto_schema(
         operation_description='See Restaurant details',
-        request_body=RestSerializer,
     )
     def all_restaurant(self, request):
         restaurants = Restaurant.objects.all()
-        serializer = RestSerializer(restaurants, many=True).data
-        return Response(data={'Restaurants': serializer}, status=status.HTTP_200_OK)
+        serializer = TGRestaurantSerializer(restaurants, many=True).data
+        return Response(data=serializer, status=status.HTTP_200_OK)
 
-    def category_restaurant(self, request):  # pan-asian, europe, usa, arabic, turkish, family
-        category = RestaurantCategory.objects.all()
-        serializer = ResCategorySerializer(category, many=True).data
-        return Response(data={'Categories': serializer}, status=status.HTTP_200_OK)
+    def restaurant_category_detail(self, request, pk):  # pan-asian, europe, arabic, turkish, family
+        category = Restaurant.objects.filter(category_id=pk)
+        serializer = TGRestaurantSerializer(category, many=True).data
+        return Response(data=serializer, status=status.HTTP_200_OK)
+
+    def filter_restaurant_menu_types(self, request, pk):
+        menu_type = Restaurant.objects.filter(restaurantmenu__menu_type_id=pk)
+        serializer = TGRestaurantSerializer(menu_type, many=True).data
+        return Response(data=serializer, status=status.HTTP_200_OK)
 
 
 class RoomsViewSet(ViewSet):
     @swagger_auto_schema(
         operation_description='See Romms details',
-        request_body=RestaurantRoomSerializer,
     )
-    def room_type(self, request):  # luxe, family, primary,
-        rooms_type = RoomType.objects.all()
-        serializer = RoomsTypeSerializer(rooms_type, many=True).data
-        return Response(data={'Room Types': serializer}, status=status.HTTP_200_OK)
-
-    def restaurant_room(self, request):
-        restaurant_room = RestaurantRoom.objects.all()
-        serializer = RestaurantRoomSerializer(restaurant_room, many=True).data
-        return Response(data={'Restaurant Rooms': serializer}, status=status.HTTP_200_OK)
+    def restaurant_room_type(self, request, pk):  # luxe, family, primary,
+        rooms_type = RoomType.objects.filter(restaurantroom__restaurant_id=pk)
+        serializer = TGRoomTypeSerializer(rooms_type, many=True).data
+        return Response(data=serializer, status=status.HTTP_200_OK)
 
 
 class RestMenuViewSet(ViewSet):  # RESTAURANT MENU
     @swagger_auto_schema(
         operation_description='See Restaurant Menu details',
-        request_body=RestaurantMenuSerializer,
     )
-    def menu_type(self, request):
-        menu_type = MenuType.objects.all()
-        serializer = MenuTypesSerializer(menu_type, many=True).data
-        return Response(data={'Menu Types': serializer}, status=status.HTTP_200_OK)
-
-    def restaurant_menu(self, request):
-        restaurant_menu = RestaurantMenu.objects.all()
-        serializer = RestaurantMenuSerializer(restaurant_menu, many=True).data
-        return Response(data={'Restaurant Menu': serializer}, status=status.HTTP_200_OK)
+    def restaurant_menu(self, request, pk):
+        restaurant_menu = RestaurantMenu.objects.filter(restaurant_id=pk)
+        serializer = TGRestaurantMenuSerializer(restaurant_menu, many=True).data
+        return Response(data=serializer, status=status.HTTP_200_OK)

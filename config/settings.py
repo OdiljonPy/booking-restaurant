@@ -128,6 +128,7 @@ MODELTRANSLATION_LANGUAGES = (
     'uz', 'ru'
 )
 
+
 TIME_ZONE = 'Asia/Tashkent'
 
 USE_I18N = True
