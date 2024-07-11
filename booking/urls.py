@@ -3,7 +3,7 @@ from booking.views import BookingViewSet, BookingActionsViewSet, OccasionViewSet
 
 urlpatterns = [
     path('', BookingViewSet.as_view({'post': 'create_booking'})),
-    path('/<int:restaurant_pk>/', BookingViewSet.as_view({'get': 'show_bookings'})),
+    path('<int:restaurant_pk>/', BookingViewSet.as_view({'get': 'show_bookings'})),
     path('actions/<int:pk>',
          BookingActionsViewSet.as_view({'get': 'detail_booking', 'patch': 'set_status', 'delete': 'delete_booking'})),
     path('actions/cancel/<int:pk>', BookingActionsViewSet.as_view({'post': 'cancel_booking'})),
