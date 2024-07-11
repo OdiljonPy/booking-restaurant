@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import TelegramUser
 from restaurants.models import Restaurant, RestaurantCategory, RoomType, RestaurantRoom, MenuType, RestaurantMenu
+from django.conf import settings
 
 
 class TelegramUserSerializer(serializers.ModelSerializer):
@@ -25,6 +26,15 @@ class TGRoomTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = RoomType
         fields = ['id', 'name']
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        lang = request.headers.get('Accept-Language', settings.MODELTRANSLATION_DEFAULT_LANGUAGE)
+        if lang not in settings.MODELTRANSLATION_LANGUAGES:
+            lang = settings.MODELTRANSLATION_DEFAULT_LANGUAGE
+        data = super().to_representation(instance)
+        data['name'] = getattr(instance, 'name_' + lang)
+        return data
 
 
 class TGRestaurantRoomSerializer(serializers.ModelSerializer):
