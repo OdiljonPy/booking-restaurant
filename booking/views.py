@@ -166,8 +166,8 @@ class OrderViewSet(ViewSet):
         tags=['Order']
 
     )
-    def list_order(self, request, pk_restaurnat):
-        orders = Order.objects.filter(restaurnat_id=pk_restaurnat)
+    def list_order(self, request, restaurant_pk):
+        orders = Order.objects.filter(restaurnat_id=restaurant_pk)
         if orders:
             return Response(data={'data': orders}, status=status.HTTP_200_OK)
         return Response({"message": "Order not found", "ok": False}, status=status.HTTP_400_BAD_REQUEST)

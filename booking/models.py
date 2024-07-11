@@ -6,11 +6,11 @@ from authentication.models import User
 from restaurants.models import Restaurant, RestaurantRoom, RestaurantMenu
 
 STATUS_CHOICES = (
-    (1, 'CREATED'),
-    (2, 'PAYING'),
-    (3, 'PAID'),
-    (4, 'BOOKED'),
-    (5, 'CANCELLED'),
+    ('1', 'CREATED'),
+    ('2', 'PAYING'),
+    ('3', 'PAID'),
+    ('4', 'BOOKED'),
+    ('5', 'CANCELLED'),
 )
 
 
