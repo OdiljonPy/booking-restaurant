@@ -16,7 +16,7 @@ class IsManagerOrAdministrator(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
 
-        if request.user.status == 3:
+        if request.user.atus == 3:
             return Manager.objects.filter(user_id=request.user.id, restaurant_id=obj.id).exists()
 
         if request.user.status == 4:
